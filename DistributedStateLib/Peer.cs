@@ -171,6 +171,8 @@ namespace Holofunk.DistributedState
             }
         }
 
+        public int PeerCount => reliableManager.ConnectedPeersCount;
+
         public void Dispose()
         {
             if (broadcastManager.ConnectedPeersCount != 0)
