@@ -13,7 +13,7 @@ namespace Holofunk.DistributedState
     /// This encapsulates a LiteNetLib NetManager instance, used for both broadcast discovery
     /// and update, and reliable peer-to-peer communication.
     /// </remarks>
-    public class Peer
+    public class Peer : IDisposable
     {
         private class BroadcastListener : INetEventListener
         {
@@ -103,6 +103,18 @@ namespace Holofunk.DistributedState
         }
 
         /// <summary>
+        /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
+        /// on my local Windows laptop.
+        /// </summary>
+        public static ushort DefaultBroadcastPort = 30303;
+
+        /// <summary>
+        /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
+        /// on my local Windows laptop.
+        /// </summary>
+        public static ushort DefaultReliablePort = 30304;
+
+        /// <summary>
         /// The broadcast port for announcing new peers and disseminating information.
         /// </summary>
         /// <remarks>
@@ -146,7 +158,28 @@ namespace Holofunk.DistributedState
             broadcastManager = new NetManager(new BroadcastListener(this));
             reliableManager = new NetManager(new ReliableListener(this));
 
-            // NEXT: ACTUALLY DO SOME CONNECTING
+            bool broadcastManagerStarted = broadcastManager.Start(BroadcastPort);
+            if (!broadcastManagerStarted)
+            {
+                throw new PeerException("Could not start broadcastManager");
+            }
+
+            bool reliableManagerStarted = reliableManager.Start(ReliablePort);
+            if (!reliableManagerStarted)
+            {
+                throw new PeerException("Could not start reliableManager");
+            }
+        }
+
+        public void Dispose()
+        {
+            if (broadcastManager.ConnectedPeersCount != 0)
+            {
+                throw new PeerException("broadcastManager should never have any peers");
+            }
+
+            reliableManager.DisconnectAll();
+            reliableManager.Flush();
         }
     }
 }
