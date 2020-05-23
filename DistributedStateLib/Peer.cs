@@ -1,8 +1,13 @@
-﻿using LiteNetLib;
+﻿// Copyright (c) 2020 by Rob Jellinghaus.
+using LiteNetLib;
+using LiteNetLib.Utils;
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Holofunk.DistributedState
 {
@@ -115,6 +120,11 @@ namespace Holofunk.DistributedState
         public static ushort DefaultReliablePort = 30304;
 
         /// <summary>
+        /// Delay between announce messages.
+        /// </summary>
+        public static int AnnounceDelayMsec = 100;
+
+        /// <summary>
         /// The broadcast port for announcing new peers and disseminating information.
         /// </summary>
         /// <remarks>
@@ -128,35 +138,59 @@ namespace Holofunk.DistributedState
         public readonly ushort ReliablePort;
 
         /// <summary>
-        /// The IPEndPoint, encoded as 32 bits; since we are wifi only and assume IPV4 is locally available. (TBD if true)
+        /// The IPEndPoint as an IPV4 address, in host order; 
+        /// since we are wifi only and assume IPV4 is locally available. (TBD if true)
         /// </summary>
-        public readonly IPAddress IPV4Address;
+        public readonly uint IPV4Address;
 
         /// <summary>
-        /// The LiteNetLib instance for handling broadcast traffic.
+        /// The LiteNetLib instance for handling broadcast traffic; has no peers.
         /// </summary>
         private NetManager broadcastManager;
 
         /// <summary>
-        /// The LiteNetLib instance for handling reliable traffic.
+        /// The LiteNetLib instance for handling reliable traffic; has one NetPeer per other participant.
         /// </summary>
         private NetManager reliableManager;
 
-        public Peer(ushort broadcastPort, ushort reliablePort)
+        /// <summary>
+        /// Reusable NetDataWriter instance; reset before use.
+        /// </summary>
+        private NetDataWriter netDataWriter;
+
+        /// <summary>
+        /// Packet processor that handles type mapping on the wire.
+        /// </summary>
+        private NetPacketProcessor netPacketProcessor;
+
+        /// <summary>
+        /// The IWorkQueue used for scheduling future work.
+        /// </summary>
+        private readonly IWorkQueue workQueue;
+
+        public Peer(IWorkQueue workQueue, ushort broadcastPort, ushort reliablePort)
         {
             Contract.Requires(broadcastPort != 0);
             Contract.Requires(reliablePort != 0);
+
+            this.workQueue = workQueue;
 
             // determine our IP
             // hat tip https://stackoverflow.com/questions/6803073/get-local-ip-address
             IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
 
-            IPV4Address = host
+            IPAddress ipv4Address = host
                 .AddressList
                 .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+#pragma warning disable CS0618 // Type or member is obsolete
+            IPV4Address = (uint)IPAddress.NetworkToHostOrder(ipv4Address.Address);
+#pragma warning restore CS0618 // Type or member is obsolete
 
             broadcastManager = new NetManager(new BroadcastListener(this));
             reliableManager = new NetManager(new ReliableListener(this));
+
+            netPacketProcessor = new NetPacketProcessor();
+            netDataWriter = new NetDataWriter();
 
             bool broadcastManagerStarted = broadcastManager.Start(BroadcastPort);
             if (!broadcastManagerStarted)
@@ -169,9 +203,51 @@ namespace Holofunk.DistributedState
             {
                 throw new PeerException("Could not start reliableManager");
             }
+
+            // send a dang announce message
+            Announce();
         }
 
         public int PeerCount => reliableManager.ConnectedPeersCount;
+
+        /// <summary>
+        /// Send an announcement message, and schedule the next such message.
+        /// </summary>
+        private void Announce()
+        {
+            AnnounceMessage message = new AnnounceMessage
+            {
+                AnnouncerIPV4Address = IPV4Address,
+                AnnouncerIsHostingAudio = false,
+                KnownPeers = new uint[0]
+            };
+
+            SendMessage(message);
+
+            // schedule next announcement
+            workQueue.RunLater(Announce, AnnounceDelayMsec);
+        }
+
+        private void SendMessage<T>(T message)
+            where T : class, new()
+        {
+            netDataWriter.Reset();
+            netPacketProcessor.Write(netDataWriter, message);
+            broadcastManager.SendBroadcast(netDataWriter, BroadcastPort);
+        }
+
+        /// <summary>
+        /// Poll all network events pending.
+        /// </summary>
+        /// <remarks>
+        /// Called from game thread; calls to this must not be concurrent with work that has
+        /// been queued on the work queue.
+        /// </remarks>
+        public void PollEvents()
+        {
+            broadcastManager.PollEvents();
+            reliableManager.PollEvents();
+        }
 
         public void Dispose()
         {

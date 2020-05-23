@@ -1,4 +1,5 @@
-﻿using LiteNetLib.Utils;
+﻿// Copyright (c) 2020 by Rob Jellinghaus.
+using LiteNetLib.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,9 +15,9 @@ namespace Holofunk.DistributedState
     public class AnnounceMessage : INetSerializable
     {
         /// <summary>
-        /// IPV4 address of the announcer.
+        /// Host-ordered IPV4 address of the announcer.
         /// </summary>
-        public int AnnouncerIPV4Address;
+        public uint AnnouncerIPV4Address;
 
         /// <summary>
         /// The announcer intends to host audio for the whole group.
@@ -27,15 +28,15 @@ namespace Holofunk.DistributedState
         public bool AnnouncerIsHostingAudio;
 
         /// <summary>
-        /// The IP addresses of peers already known to this Peer.
+        /// The host-ordered IPV4 addresses of peers already known to this Peer.
         /// </summary>
-        public int[] KnownPeers;
+        public uint[] KnownPeers;
 
         public void Deserialize(NetDataReader reader)
         {
-            AnnouncerIPV4Address = reader.GetInt();
+            AnnouncerIPV4Address = reader.GetUInt();
             AnnouncerIsHostingAudio = reader.GetBool();
-            KnownPeers = reader.GetIntArray();
+            KnownPeers = reader.GetUIntArray();
         }
 
         public void Serialize(NetDataWriter writer)
