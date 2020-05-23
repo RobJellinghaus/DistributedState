@@ -18,7 +18,7 @@ namespace Holofunk.DistributedState
     /// This encapsulates a LiteNetLib NetManager instance, used for both broadcast discovery
     /// and update, and reliable peer-to-peer communication.
     /// </remarks>
-    public class Peer : IDisposable
+    public class Peer : IPollEvents, IDisposable
     {
         private class BroadcastListener : INetEventListener
         {
@@ -111,7 +111,7 @@ namespace Holofunk.DistributedState
         /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
         /// on my local Windows laptop.
         /// </summary>
-        public static ushort DefaultBroadcastPort = 30303;
+        public static ushort DefaultBroadcastPort = 9050;
 
         /// <summary>
         /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
@@ -141,7 +141,7 @@ namespace Holofunk.DistributedState
         /// The IPEndPoint as an IPV4 address, in host order; 
         /// since we are wifi only and assume IPV4 is locally available. (TBD if true)
         /// </summary>
-        public readonly uint IPV4Address;
+        public readonly long IPV4Address;
 
         /// <summary>
         /// The LiteNetLib instance for handling broadcast traffic; has no peers.
@@ -183,16 +183,22 @@ namespace Holofunk.DistributedState
                 .AddressList
                 .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
 #pragma warning disable CS0618 // Type or member is obsolete
-            IPV4Address = (uint)IPAddress.NetworkToHostOrder(ipv4Address.Address);
+            long ipv4AddressAddress = ipv4Address.Address;
 #pragma warning restore CS0618 // Type or member is obsolete
+            IPV4Address = IPAddress.NetworkToHostOrder(ipv4AddressAddress);
 
-            broadcastManager = new NetManager(new BroadcastListener(this));
+            broadcastManager = new NetManager(new BroadcastListener(this))
+            {
+                BroadcastReceiveEnabled = true,
+                UnconnectedMessagesEnabled = true
+            };
+
             reliableManager = new NetManager(new ReliableListener(this));
 
             netPacketProcessor = new NetPacketProcessor();
             netDataWriter = new NetDataWriter();
 
-            bool broadcastManagerStarted = broadcastManager.Start(BroadcastPort);
+            bool broadcastManagerStarted = broadcastManager.Start(); // TODO: can we also listen on BroadcastPort?
             if (!broadcastManagerStarted)
             {
                 throw new PeerException("Could not start broadcastManager");
@@ -219,16 +225,16 @@ namespace Holofunk.DistributedState
             {
                 AnnouncerIPV4Address = IPV4Address,
                 AnnouncerIsHostingAudio = false,
-                KnownPeers = new uint[0]
+                KnownPeers = new long[0]
             };
 
-            SendMessage(message);
+            SendBroadcastMessage(message);
 
             // schedule next announcement
             workQueue.RunLater(Announce, AnnounceDelayMsec);
         }
 
-        private void SendMessage<T>(T message)
+        private void SendBroadcastMessage<T>(T message)
             where T : class, new()
         {
             netDataWriter.Reset();

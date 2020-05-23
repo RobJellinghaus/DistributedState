@@ -1,5 +1,4 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
-using LiteNetLib;
 using NUnit.Framework;
 using System;
 using System.Collections.Generic;
@@ -21,14 +20,14 @@ namespace Holofunk.DistributedState.Test
         /// <summary>
         /// Sleep-retry loop, polling all NetManagers on each iteration, exiting once function becomes true.
         /// </summary>
-        public static void WaitUntil(IEnumerable<NetManager> netManagers, Func<bool> function)
+        public static void WaitUntil(IEnumerable<IPollEvents> pollables, Func<bool> function)
         {
             bool ok = false;
             for (int i = 0; i < IterationsBeforeFailure; i++)
             {
-                foreach (NetManager netManager in netManagers)
+                foreach (IPollEvents pollable in pollables)
                 {
-                    netManager.PollEvents();
+                    pollable.PollEvents();
                 }
                 if (function())
                 {

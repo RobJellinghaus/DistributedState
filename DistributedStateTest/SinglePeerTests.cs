@@ -29,13 +29,18 @@ namespace Holofunk.DistributedState.Test
             var testWorkQueue = new TestWorkQueue();
 
             var testBroadcastListener = new TestBroadcastNetEventListener();
-            var testNetManager = new NetManager(testBroadcastListener);
-            testNetManager.Start(Peer.DefaultBroadcastPort);
+            var testNetManager = new TestNetManager(new NetManager(testBroadcastListener));
+            testNetManager.NetManager.BroadcastReceiveEnabled = true;
+            testNetManager.NetManager.Start(Peer.DefaultBroadcastPort);
 
+            // the peer under test
             using Peer peer = new Peer(testWorkQueue, Peer.DefaultBroadcastPort, Peer.DefaultReliablePort);
 
+            // the list of all pollable objects, to ensure forward progress
+            IPollEvents[] pollables = new IPollEvents[] { peer, testNetManager };
+
             // should have received Announce message
-            WaitUtils.WaitUntil(new[] { testNetManager }, () => testBroadcastListener.ReceivedMessages.Count == 1);
+            WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
             Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out object announceMessage));
             ValidateAnnounceMessage(announceMessage, peer);
 
@@ -46,7 +51,7 @@ namespace Holofunk.DistributedState.Test
             Assert.AreEqual(1, testWorkQueue.Count);
 
             // wait to receive second Announce
-            WaitUtils.WaitUntil(new[] { testNetManager }, () => testBroadcastListener.ReceivedMessages.Count == 1);
+            WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
             Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
             ValidateAnnounceMessage(announceMessage, peer);
 

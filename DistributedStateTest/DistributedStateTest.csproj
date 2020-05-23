@@ -18,4 +18,10 @@
     <ProjectReference Include="..\DistributedStateLib\DistributedStateLib.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="LiteNetLib">
+      <HintPath>..\..\LiteNetLib\LiteNetLib\bin\Debug\netstandard2.0\LiteNetLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

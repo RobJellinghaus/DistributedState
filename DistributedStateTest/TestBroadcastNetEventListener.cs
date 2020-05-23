@@ -11,25 +11,18 @@ namespace Holofunk.DistributedState.Test
     class TestBroadcastNetEventListener : INetEventListener
     {
         /// <summary>
-        /// Messages received.
-        /// </summary>
-        private readonly ConcurrentQueue<object> receivedMessages;
-
-        /// <summary>
         /// Net packet processor for deserializing.
         /// </summary>
         private readonly NetPacketProcessor netPacketProcessor;
 
-        private readonly NetDataReader netDataReader;
-
         public TestBroadcastNetEventListener()
         {
-            receivedMessages = new ConcurrentQueue<object>();
+            ReceivedMessages = new ConcurrentQueue<object>();
             netPacketProcessor = new NetPacketProcessor();
-            netPacketProcessor.Subscribe(message => receivedMessages.Enqueue(message), () => new AnnounceMessage());
+            netPacketProcessor.Subscribe(message => ReceivedMessages.Enqueue(message), () => new AnnounceMessage());
         }
 
-        public ConcurrentQueue<object> ReceivedMessages => receivedMessages;
+        public ConcurrentQueue<object> ReceivedMessages { get; }
 
         public void OnConnectionRequest(ConnectionRequest request)
         {
