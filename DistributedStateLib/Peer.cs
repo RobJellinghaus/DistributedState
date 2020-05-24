@@ -168,7 +168,22 @@ namespace Holofunk.DistributedState
         /// </summary>
         private readonly IWorkQueue workQueue;
 
-        public Peer(IWorkQueue workQueue, ushort broadcastPort, ushort reliablePort)
+        /// <summary>
+        /// Whether this Peer should bind to BroadcastPort to listen to announcements from
+        /// other Peers.
+        /// </summary>
+        /// <remarks>
+        /// The only reason not to do this is for testing; the Announcement test binds to BroadcastPort
+        /// to verify the AnnouncementMessages sent by a new Peer, so that test needs to make the Peer
+        /// *not* bind.
+        /// </remarks>
+        private bool listenForPeerAnnouncements;
+
+        public Peer(
+            IWorkQueue workQueue,
+            ushort broadcastPort,
+            ushort reliablePort,
+            bool listenForPeerAnnouncements = true)
         {
             Contract.Requires(broadcastPort != 0);
             Contract.Requires(reliablePort != 0);
@@ -176,6 +191,7 @@ namespace Holofunk.DistributedState
             BroadcastPort = broadcastPort;
             ReliablePort = reliablePort;
             this.workQueue = workQueue;
+            this.listenForPeerAnnouncements = listenForPeerAnnouncements;
 
             // determine our IP
             // hat tip https://stackoverflow.com/questions/6803073/get-local-ip-address
@@ -200,7 +216,16 @@ namespace Holofunk.DistributedState
             netPacketProcessor = new NetPacketProcessor();
             netDataWriter = new NetDataWriter();
 
-            bool broadcastManagerStarted = broadcastManager.Start(); // TODO: can we also listen on BroadcastPort?
+            bool broadcastManagerStarted;
+            if (listenForPeerAnnouncements)
+            {
+                broadcastManagerStarted = broadcastManager.Start(BroadcastPort);
+            }
+            else
+            {
+                broadcastManagerStarted = broadcastManager.Start();
+            }
+
             if (!broadcastManagerStarted)
             {
                 throw new PeerException("Could not start broadcastManager");

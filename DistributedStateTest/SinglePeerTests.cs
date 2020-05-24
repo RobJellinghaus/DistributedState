@@ -34,7 +34,11 @@ namespace Holofunk.DistributedState.Test
             testNetManager.NetManager.Start(Peer.DefaultBroadcastPort);
 
             // the peer under test
-            using Peer peer = new Peer(testWorkQueue, Peer.DefaultBroadcastPort, Peer.DefaultReliablePort);
+            using Peer peer = new Peer(
+                testWorkQueue,
+                Peer.DefaultBroadcastPort,
+                Peer.DefaultReliablePort,
+                listenForPeerAnnouncements: false);
 
             // the list of all pollable objects, to ensure forward progress
             IPollEvents[] pollables = new IPollEvents[] { peer, testNetManager };
