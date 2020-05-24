@@ -264,8 +264,8 @@ namespace Holofunk.DistributedState
                 throw new PeerException("broadcastManager should never have any peers");
             }
 
-            reliableManager.DisconnectAll();
-            reliableManager.Flush();
+            broadcastManager.Stop();
+            reliableManager.Stop(true);
         }
     }
 }

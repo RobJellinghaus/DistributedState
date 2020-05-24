@@ -42,7 +42,11 @@ namespace Holofunk.DistributedState.Test
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
         {
-            netPacketProcessor.ReadAllPackets(reader);
+            // ipv4 only for the moment... maybe someday do ipv6 switch, and then later duplicate suppression
+            if (remoteEndPoint.AddressFamily == AddressFamily.InterNetwork)
+            {
+                netPacketProcessor.ReadAllPackets(reader);
+            }
         }
 
         public void OnPeerConnected(NetPeer peer)

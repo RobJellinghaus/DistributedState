@@ -17,7 +17,7 @@ namespace Holofunk.DistributedState
         /// <summary>
         /// Host-ordered IPV4 address of the announcer.
         /// </summary>
-        public long AnnouncerIPV4Address;
+        public long AnnouncerIPV4Address { get; set; }
 
         /// <summary>
         /// The announcer intends to host audio for the whole group.
@@ -25,12 +25,12 @@ namespace Holofunk.DistributedState
         /// <remarks>
         /// This is the case if the announcer, for example, is a PC hosting all the sound hardware for the space.
         /// </remarks>
-        public bool AnnouncerIsHostingAudio;
+        public bool AnnouncerIsHostingAudio { get; set; }
 
         /// <summary>
         /// The host-ordered IPV4 addresses of peers already known to this Peer.
         /// </summary>
-        public long[] KnownPeers;
+        public long[] KnownPeers { get; set; }
 
         public void Deserialize(NetDataReader reader)
         {
