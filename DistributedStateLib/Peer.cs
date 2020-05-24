@@ -173,6 +173,8 @@ namespace Holofunk.DistributedState
             Contract.Requires(broadcastPort != 0);
             Contract.Requires(reliablePort != 0);
 
+            BroadcastPort = broadcastPort;
+            ReliablePort = reliablePort;
             this.workQueue = workQueue;
 
             // determine our IP

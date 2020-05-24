@@ -45,7 +45,7 @@ namespace Holofunk.DistributedState.Test
             ValidateAnnounceMessage(announceMessage, peer);
 
             // now execute pending work
-            testWorkQueue.RunQueuedWork();
+            testWorkQueue.PollEvents();
 
             // should still be one queued item -- the *next* announce message
             Assert.AreEqual(1, testWorkQueue.Count);

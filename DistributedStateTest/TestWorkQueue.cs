@@ -35,7 +35,14 @@ namespace Holofunk.DistributedState.Test
             actions.Add(action);
         }
 
-        public void RunQueuedWork()
+        /// <summary>
+        /// Execute the queued work.
+        /// </summary>
+        /// <remarks>
+        /// This is an odd method name, but it follows LiteNetLib precedent for event-pumped objects that are driven by
+        /// externally serialized PollEvents calls.
+        /// </remarks>
+        public void PollEvents()
         {
             // allocate copy so that if any actions queue more work, it gets queued after all current work
             Action[] actionsCopy = actions.ToArray();

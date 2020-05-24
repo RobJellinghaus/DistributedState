@@ -11,9 +11,10 @@ namespace Holofunk.DistributedState
     /// hardcode Unity coroutines etc. into this library either, we use this interface to abstract over
     /// however the local environment supports running work later.
     /// 
-    /// The assumption is that work invoked from this queue will never race with 
+    /// The assumption is that work invoked from this queue will never race with other PollEvents calls
+    /// on other objects, in particular other LiteNetLib objects.    
     /// </remarks>
-    public interface IWorkQueue
+    public interface IWorkQueue : IPollEvents
     {
         /// <summary>
         /// Execute this action sometime in the future by some means.
