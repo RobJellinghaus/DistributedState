@@ -48,14 +48,14 @@ namespace Holofunk.DistributedState.Test
             Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out object announceMessage));
             ValidateAnnounceMessage(announceMessage, peer);
 
+            // now execute pending work
+            testWorkQueue.PollEvents();
+
+            // should still be one queued item -- the *next* announce message
+            Assert.AreEqual(1, testWorkQueue.Count);
+
             if (false) // ASAP
             {
-                // now execute pending work
-                testWorkQueue.PollEvents();
-
-                // should still be one queued item -- the *next* announce message
-                Assert.AreEqual(1, testWorkQueue.Count);
-
                 // wait to receive second Announce
                 WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
                 Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
