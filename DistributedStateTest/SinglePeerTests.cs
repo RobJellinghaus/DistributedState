@@ -6,11 +6,6 @@ namespace Holofunk.DistributedState.Test
 {
     public class SinglePeerTests
     {
-        [SetUp]
-        public void Setup()
-        {
-        }
-
         [Test]
         public void ConstructPeer()
         {
@@ -89,7 +84,7 @@ namespace Holofunk.DistributedState.Test
             IPollEvents[] pollables = new IPollEvents[] { peer };
 
             // should have received Announce message
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnouncementCount == 1);
+            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 1);
 
             // now execute pending work
             testWorkQueue.PollEvents();
@@ -98,7 +93,7 @@ namespace Holofunk.DistributedState.Test
             Assert.AreEqual(1, testWorkQueue.Count);
 
             // wait to receive second Announce
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnouncementCount == 2);
+            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 2);
         }
 
         [Test]
@@ -119,7 +114,7 @@ namespace Holofunk.DistributedState.Test
             IPollEvents[] pollables = new IPollEvents[] { peer, peer2 };
 
             // should have received Announce message
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnouncementCount == 1);
+            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 1);
 
             // now execute pending work
             testWorkQueue.PollEvents();
@@ -128,7 +123,7 @@ namespace Holofunk.DistributedState.Test
             Assert.AreEqual(1, testWorkQueue.Count);
 
             // wait to receive second Announce
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnouncementCount == 2);
+            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 2);
         }
     }
 }

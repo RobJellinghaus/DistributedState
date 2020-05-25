@@ -20,6 +20,8 @@ namespace Holofunk.DistributedState
     /// </remarks>
     public class Peer : IPollEvents, IDisposable
     {
+        private static string RequestKey = "";
+
         /// <summary>
         /// Listener handles unconnected messages (broadcasts), as well as connected
         /// messages from peers.
@@ -33,6 +35,7 @@ namespace Holofunk.DistributedState
             }
             public void OnConnectionRequest(ConnectionRequest request)
             {
+                request.AcceptIfKey(RequestKey);
             }
 
             public void OnNetworkError(IPEndPoint endPoint, SocketError socketError)
@@ -63,50 +66,6 @@ namespace Holofunk.DistributedState
             public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
                 // TODO: clean up all proxies owned by that peer
-            }
-        }
-
-        private class ReliableListener : INetEventListener
-        {
-            readonly Peer Peer;
-            internal ReliableListener(Peer peer)
-            {
-                Peer = peer;
-            }
-
-            public void OnConnectionRequest(ConnectionRequest request)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnNetworkError(IPEndPoint endPoint, SocketError socketError)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
-            {
-                // this listener never receives unconnected data
-            }
-
-            public void OnPeerConnected(NetPeer peer)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
-            {
-                throw new NotImplementedException();
             }
         }
 
@@ -167,7 +126,15 @@ namespace Holofunk.DistributedState
         /// <remarks>
         /// Only for testing.
         /// </remarks>
-        public int PeerAnnouncementCount { get; private set; }
+        public int PeerAnnounceCount { get; private set; }
+
+        /// <summary>
+        /// How many peer announcement responses has this peer received?
+        /// </summary>
+        /// <remarks>
+        /// Only for testing.
+        /// </remarks>
+        public int PeerAnnounceResponseCount { get; private set; }
 
         /// <summary>
         /// Known IPV4 addresses of other peers.
@@ -206,7 +173,8 @@ namespace Holofunk.DistributedState
             };
 
             netPacketProcessor = new NetPacketProcessor();
-            netPacketProcessor.SubscribeReusable<AnnounceMessage, IPEndPoint>(OnAnnouncementReceived);
+            netPacketProcessor.SubscribeReusable<AnnounceMessage, IPEndPoint>(OnAnnounceReceived);
+            netPacketProcessor.SubscribeReusable<AnnounceResponseMessage, IPEndPoint>(OnAnnounceResponseReceived);
 
             netDataWriter = new NetDataWriter();
 
@@ -258,25 +226,63 @@ namespace Holofunk.DistributedState
             netManager.SendBroadcast(netDataWriter, ListenPort);
         }
 
+        private void SendUnconnectedMessage<T>(T message, IPEndPoint endpoint)
+            where T : class, new()
+        {
+            netDataWriter.Reset();
+            netPacketProcessor.Write(netDataWriter, message);
+            netManager.SendUnconnectedMessage(netDataWriter, endpoint);
+        }
+
         /// <summary>
         /// An announcement has been received via broadcast; react accordingly.
         /// </summary>
         /// <param name="message"></param>
-        private void OnAnnouncementReceived(AnnounceMessage message, IPEndPoint userData)
+        private void OnAnnounceReceived(AnnounceMessage message, IPEndPoint endpoint)
         {
             // heed only ipv4 for now... TBD what to do about this
-            if (userData.AddressFamily == AddressFamily.InterNetwork)
+            if (endpoint.AddressFamily == AddressFamily.InterNetwork)
             {
-                PeerAnnouncementCount++;
+                PeerAnnounceCount++;
 
-                if (message.AnnouncerIPV4Address == IPV4Address)
+                // do we know this peer already?
+                // (could happen in race scenario)
+                if (netManager.ConnectedPeerList.Any(peer => peer.EndPoint.Equals(endpoint)))
                 {
-                    // we sent this, ignore it
+                    return;
                 }
-                else
+
+                // did this peer know us already? (typical scenario given re-announcements)
+                if (message.KnownPeers.Contains(IPV4Address))
                 {
-                    // do we know this peer already?
+                    return;
                 }
+
+                // send announce response
+                AnnounceResponseMessage response = new AnnounceResponseMessage { ResponderIPV4Address = IPV4Address };
+                SendUnconnectedMessage(response, endpoint);
+            }
+        }
+
+        /// <summary>
+        /// An announcement has been received via broadcast; react accordingly.
+        /// </summary>
+        private void OnAnnounceResponseReceived(AnnounceResponseMessage message, IPEndPoint endpoint)
+        {
+            // heed only ipv4 for now... TBD what to do about this
+            if (endpoint.AddressFamily == AddressFamily.InterNetwork)
+            {
+                PeerAnnounceResponseCount++;
+
+                // we shouldn't know this peer yet, let's check.
+                if (netManager.ConnectedPeerList.Any(peer => peer.EndPoint.Equals(endpoint)))
+                {
+                    // surprise, we do! must have been a rave.
+                    return;
+                }
+
+                // So, connect away.
+                netManager.Connect(endpoint, RequestKey);
             }
         }
 
