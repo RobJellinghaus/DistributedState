@@ -2,6 +2,7 @@
 using LiteNetLib;
 using LiteNetLib.Utils;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,34 +15,39 @@ namespace Holofunk.DistributedState
     /// <remarks>
     /// This encapsulates a LiteNetLib NetManager instance, used for both broadcast discovery
     /// and update, and reliable peer-to-peer communication.
+    /// 
+    /// The Peer's first responsibility is discovering other Peers. 
     /// </remarks>
     public class Peer : IPollEvents, IDisposable
     {
-        private class BroadcastListener : INetEventListener
+        /// <summary>
+        /// Listener handles unconnected messages (broadcasts), as well as connected
+        /// messages from peers.
+        /// </summary>
+        private class Listener : INetEventListener
         {
             readonly Peer Peer;
-            internal BroadcastListener(Peer peer)
+            internal Listener(Peer peer)
             {
                 Peer = peer;
             }
             public void OnConnectionRequest(ConnectionRequest request)
             {
-                // this listener receives no connection requests
             }
 
             public void OnNetworkError(IPEndPoint endPoint, SocketError socketError)
             {
-                throw new NotImplementedException();
+                // TBD what to do here
             }
 
             public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
             {
-                // this listener has no peers
+                // TBD whether anything should be done here
             }
 
             public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
             {
-                // this listener only receives broadcasts
+                Peer.netPacketProcessor.ReadAllPackets(reader, peer);
             }
 
             public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
@@ -51,12 +57,12 @@ namespace Holofunk.DistributedState
 
             public void OnPeerConnected(NetPeer peer)
             {
-                // peers don't connect to this listener
+                // TODO: send the peer all locally known objects
             }
 
             public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
-                // peers don't connect to this listener
+                // TODO: clean up all proxies owned by that peer
             }
         }
 
@@ -108,7 +114,7 @@ namespace Holofunk.DistributedState
         /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
         /// on my local Windows laptop.
         /// </summary>
-        public static ushort DefaultBroadcastPort = 9050;
+        public static ushort DefaultListenPort = 9050;
 
         /// <summary>
         /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
@@ -127,12 +133,7 @@ namespace Holofunk.DistributedState
         /// <remarks>
         /// Maybe shouldn't overload broadcast port; we'll see.
         /// </remarks>
-        public readonly ushort BroadcastPort;
-
-        /// <summary>
-        /// The reliable port for peer-to-peer mandatory communication.
-        /// </summary>
-        public readonly ushort ReliablePort;
+        public readonly ushort ListenPort;
 
         /// <summary>
         /// The IPEndPoint as an IPV4 address, in host order; 
@@ -143,12 +144,7 @@ namespace Holofunk.DistributedState
         /// <summary>
         /// The LiteNetLib instance for handling broadcast traffic; has no peers.
         /// </summary>
-        private NetManager broadcastManager;
-
-        /// <summary>
-        /// The LiteNetLib instance for handling reliable traffic; has one NetPeer per other participant.
-        /// </summary>
-        private NetManager reliableManager;
+        private NetManager netManager;
 
         /// <summary>
         /// Reusable NetDataWriter instance; reset before use.
@@ -173,17 +169,22 @@ namespace Holofunk.DistributedState
         /// </remarks>
         public int PeerAnnouncementCount { get; private set; }
 
+        /// <summary>
+        /// Known IPV4 addresses of other peers.
+        /// </summary>
+        /// <remarks>
+        /// This set is populated when Announce messages are received.
+        /// </remarks>
+        private HashSet<long> knownPeerIPV4Addresses = new HashSet<long>();
+
         public Peer(
             IWorkQueue workQueue,
-            ushort broadcastPort,
-            ushort reliablePort,
-            bool listenForPeerAnnouncements = true)
+            ushort listenPort,
+            bool isListener = true)
         {
-            Contract.Requires(broadcastPort != 0);
-            Contract.Requires(reliablePort != 0);
+            Contract.Requires(listenPort != 0);
 
-            BroadcastPort = broadcastPort;
-            ReliablePort = reliablePort;
+            ListenPort = listenPort;
             this.workQueue = workQueue;
 
             // determine our IP
@@ -198,50 +199,43 @@ namespace Holofunk.DistributedState
 #pragma warning restore CS0618 // Type or member is obsolete
             IPV4Address = IPAddress.NetworkToHostOrder(ipv4AddressAddress);
 
-            broadcastManager = new NetManager(new BroadcastListener(this))
+            netManager = new NetManager(new Listener(this))
             {
                 BroadcastReceiveEnabled = true,
                 UnconnectedMessagesEnabled = true
             };
-
-            reliableManager = new NetManager(new ReliableListener(this));
 
             netPacketProcessor = new NetPacketProcessor();
             netPacketProcessor.SubscribeReusable<AnnounceMessage, IPEndPoint>(OnAnnouncementReceived);
 
             netDataWriter = new NetDataWriter();
 
-            bool broadcastManagerStarted;
-            if (listenForPeerAnnouncements)
+            bool managerStarted;
+            if (isListener)
             {
-                broadcastManagerStarted = broadcastManager.Start(BroadcastPort);
+                managerStarted = netManager.Start(ListenPort);
             }
             else
             {
-                broadcastManagerStarted = broadcastManager.Start();
+                managerStarted = netManager.Start();
             }
 
-            if (!broadcastManagerStarted)
+            if (!managerStarted)
             {
-                throw new PeerException("Could not start broadcastManager");
+                throw new PeerException("Could not start netManager");
             }
-
-            bool reliableManagerStarted = reliableManager.Start(ReliablePort);
-            if (!reliableManagerStarted)
-            {
-                throw new PeerException("Could not start reliableManager");
-            }
-
-            // send a dang announce message
-            Announce();
         }
 
-        public int PeerCount => reliableManager.ConnectedPeersCount;
+        public int PeerCount => netManager.ConnectedPeersCount;
 
         /// <summary>
         /// Send an announcement message, and schedule the next such message.
         /// </summary>
-        private void Announce()
+        /// <remarks>
+        /// After constructing a Peer, generally one calls Announce() just once
+        /// to start the perpetual cycle of announcements that each Peer makes.
+        /// </remarks>
+        public void Announce()
         {
             AnnounceMessage message = new AnnounceMessage
             {
@@ -261,7 +255,7 @@ namespace Holofunk.DistributedState
         {
             netDataWriter.Reset();
             netPacketProcessor.Write(netDataWriter, message);
-            broadcastManager.SendBroadcast(netDataWriter, BroadcastPort);
+            netManager.SendBroadcast(netDataWriter, ListenPort);
         }
 
         /// <summary>
@@ -279,6 +273,10 @@ namespace Holofunk.DistributedState
                 {
                     // we sent this, ignore it
                 }
+                else
+                {
+                    // do we know this peer already?
+                }
             }
         }
 
@@ -291,19 +289,12 @@ namespace Holofunk.DistributedState
         /// </remarks>
         public void PollEvents()
         {
-            broadcastManager.PollEvents();
-            reliableManager.PollEvents();
+            netManager.PollEvents();
         }
 
         public void Dispose()
         {
-            if (broadcastManager.ConnectedPeersCount != 0)
-            {
-                throw new PeerException("broadcastManager should never have any peers");
-            }
-
-            broadcastManager.Stop();
-            reliableManager.Stop(true);
+            netManager.Stop(true);
         }
     }
 }
