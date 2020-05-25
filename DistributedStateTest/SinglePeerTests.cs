@@ -24,7 +24,7 @@ namespace Holofunk.DistributedState.Test
         }
 
         [Test]
-        public void ListenForAnnounce()
+        public void TestListenForAnnounce()
         {
             var testWorkQueue = new TestWorkQueue();
 
@@ -54,14 +54,10 @@ namespace Holofunk.DistributedState.Test
             // should still be one queued item -- the *next* announce message
             Assert.AreEqual(1, testWorkQueue.Count);
 
-            if (false) // ASAP
-            {
-                // wait to receive second Announce
-                WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
-                Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
-                ValidateAnnounceMessage(announceMessage, peer);
-
-            }
+            // wait to receive second Announce
+            WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
+            Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
+            ValidateAnnounceMessage(announceMessage, peer);
 
             static void ValidateAnnounceMessage(object possibleMessage, Peer peer)
             {
@@ -70,6 +66,35 @@ namespace Holofunk.DistributedState.Test
                 Assert.AreEqual(peer.IPV4Address, announceMessage.AnnouncerIPV4Address);
                 Assert.AreEqual(0, announceMessage.KnownPeers.Length);
             }
+        }
+
+
+        [Test]
+        public void PeerListenForAnnounce()
+        {
+            var testWorkQueue = new TestWorkQueue();
+
+            // the peer under test
+            using Peer peer = new Peer(
+                testWorkQueue,
+                Peer.DefaultBroadcastPort,
+                Peer.DefaultReliablePort,
+                listenForPeerAnnouncements: true);
+
+            // the list of all pollable objects, to ensure forward progress
+            IPollEvents[] pollables = new IPollEvents[] { peer };
+
+            // should have received Announce message
+            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnouncementCount == 1);
+
+            // now execute pending work
+            testWorkQueue.PollEvents();
+
+            // should still be one queued item -- the *next* announce message
+            Assert.AreEqual(1, testWorkQueue.Count);
+
+            // wait to receive second Announce
+            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnouncementCount == 2);
         }
     }
 }

@@ -49,7 +49,7 @@ namespace Holofunk.DistributedState
 
             public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
             {
-                throw new NotImplementedException();
+                Peer.netPacketProcessor.ReadAllPackets(reader, remoteEndPoint);
             }
 
             public void OnPeerConnected(NetPeer peer)
@@ -169,15 +169,12 @@ namespace Holofunk.DistributedState
         private readonly IWorkQueue workQueue;
 
         /// <summary>
-        /// Whether this Peer should bind to BroadcastPort to listen to announcements from
-        /// other Peers.
+        /// How many peer announcements has this peer received?
         /// </summary>
         /// <remarks>
-        /// The only reason not to do this is for testing; the Announcement test binds to BroadcastPort
-        /// to verify the AnnouncementMessages sent by a new Peer, so that test needs to make the Peer
-        /// *not* bind.
+        /// Only for testing.
         /// </remarks>
-        private bool listenForPeerAnnouncements;
+        public int PeerAnnouncementCount { get; private set; }
 
         public Peer(
             IWorkQueue workQueue,
@@ -191,7 +188,6 @@ namespace Holofunk.DistributedState
             BroadcastPort = broadcastPort;
             ReliablePort = reliablePort;
             this.workQueue = workQueue;
-            this.listenForPeerAnnouncements = listenForPeerAnnouncements;
 
             // determine our IP
             // hat tip https://stackoverflow.com/questions/6803073/get-local-ip-address
@@ -214,6 +210,8 @@ namespace Holofunk.DistributedState
             reliableManager = new NetManager(new ReliableListener(this));
 
             netPacketProcessor = new NetPacketProcessor();
+            netPacketProcessor.SubscribeReusable<AnnounceMessage, IPEndPoint>(OnAnnouncementReceived);
+
             netDataWriter = new NetDataWriter();
 
             bool broadcastManagerStarted;
@@ -267,6 +265,24 @@ namespace Holofunk.DistributedState
             netDataWriter.Reset();
             netPacketProcessor.Write(netDataWriter, message);
             broadcastManager.SendBroadcast(netDataWriter, BroadcastPort);
+        }
+
+        /// <summary>
+        /// An announcement has been received via broadcast; react accordingly.
+        /// </summary>
+        /// <param name="message"></param>
+        private void OnAnnouncementReceived(AnnounceMessage message, IPEndPoint userData)
+        {
+            // heed only ipv4 for now... TBD what to do about this
+            if (userData.AddressFamily == AddressFamily.InterNetwork)
+            {
+                PeerAnnouncementCount++;
+
+                if (message.AnnouncerIPV4Address == IPV4Address)
+                {
+                    // we sent this, ignore it
+                }
+            }
         }
 
         /// <summary>
