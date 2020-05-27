@@ -9,7 +9,7 @@ namespace Holofunk.DistributedState
     /// <remarks>
     /// Peers with no connections will periodically re-announce.
     /// </remarks>
-    public class AnnounceMessage : INetSerializable
+    public class AnnounceMessage
     {
         /// <summary>
         /// Host-ordered IPV4 address of the announcer.
@@ -28,19 +28,5 @@ namespace Holofunk.DistributedState
         /// The host-ordered IPV4 addresses of peers already known to this Peer.
         /// </summary>
         public long[] KnownPeers { get; set; }
-
-        public void Deserialize(NetDataReader reader)
-        {
-            AnnouncerIPV4Address = reader.GetLong();
-            AnnouncerIsHostingAudio = reader.GetBool();
-            KnownPeers = reader.GetLongArray();
-        }
-
-        public void Serialize(NetDataWriter writer)
-        {
-            writer.Put(AnnouncerIPV4Address);
-            writer.Put(AnnouncerIsHostingAudio);
-            writer.PutArray(KnownPeers);
-        }
     }
 }
