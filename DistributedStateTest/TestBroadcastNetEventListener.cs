@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Holofunk.DistributedState.Test
+namespace DistributedState.Test
 {
     class TestBroadcastNetEventListener : INetEventListener
     {

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Holofunk.DistributedState.Test
+namespace DistributedState.Test
 {
     /// <summary>
     /// Methods to enter polling sleep loops until conditions are met or timeouts happen.

@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using LiteNetLib;
 
-namespace Holofunk.DistributedState.Test
+namespace DistributedState.Test
 {
     /// <summary>
     /// Test class wrapping a NetManager.

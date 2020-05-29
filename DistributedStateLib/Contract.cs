@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using System.Diagnostics;
 
-namespace Holofunk.DistributedState
+namespace DistributedState
 {
     public static class Contract
     {

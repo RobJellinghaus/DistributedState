@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Holofunk.DistributedState
+namespace DistributedState
 {
     /// <summary>
     /// Message sent by Peers that hear announcements which don't mention them.

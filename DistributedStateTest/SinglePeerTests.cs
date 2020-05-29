@@ -2,7 +2,7 @@
 using LiteNetLib;
 using NUnit.Framework;
 
-namespace Holofunk.DistributedState.Test
+namespace DistributedState.Test
 {
     public class SinglePeerTests
     {

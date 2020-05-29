@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using LiteNetLib.Utils;
 
-namespace Holofunk.DistributedState
+namespace DistributedState
 {
     /// <summary>
     /// Message sent by Peers that are just entering the system.

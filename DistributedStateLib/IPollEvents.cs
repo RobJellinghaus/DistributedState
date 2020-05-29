@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace Holofunk.DistributedState
+namespace DistributedState
 {
     /// <summary>
     /// Poll events on this object.

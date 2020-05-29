@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Holofunk.DistributedState.Test
+namespace DistributedState.Test
 {
     /// <summary>
     /// Work queue that runs work when polled.

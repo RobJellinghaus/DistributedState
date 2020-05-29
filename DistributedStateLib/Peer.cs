@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
-namespace Holofunk.DistributedState
+namespace DistributedState
 {
     /// <summary>
     /// Peer participant in the distributed system.

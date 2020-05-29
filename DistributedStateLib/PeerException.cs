@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using System;
 
-namespace Holofunk.DistributedState
+namespace DistributedState
 {
     /// <summary>
     /// Exception thrown due to unexpected condition in Peer code.

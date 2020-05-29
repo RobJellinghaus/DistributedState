@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedStateLib", "DistributedStateLib\DistributedStateLib.csproj", "{248B9918-50CA-4602-A657-7C7B5BF7BDEF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedStateTest", "DistributedStateTest\DistributedStateTest.csproj", "{5C61CDAF-FC48-4812-80C6-111DC9E61687}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DistributedStateTest", "DistributedStateTest\DistributedStateTest.csproj", "{5C61CDAF-FC48-4812-80C6-111DC9E61687}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistributedThing", "DistributedThing\DistributedThing.csproj", "{B91E76FE-E515-4438-8657-FA7F08028D4D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{5C61CDAF-FC48-4812-80C6-111DC9E61687}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5C61CDAF-FC48-4812-80C6-111DC9E61687}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5C61CDAF-FC48-4812-80C6-111DC9E61687}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B91E76FE-E515-4438-8657-FA7F08028D4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B91E76FE-E515-4438-8657-FA7F08028D4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B91E76FE-E515-4438-8657-FA7F08028D4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B91E76FE-E515-4438-8657-FA7F08028D4D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
