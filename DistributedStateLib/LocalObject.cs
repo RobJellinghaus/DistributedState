@@ -12,6 +12,16 @@ namespace DistributedState
     public abstract class LocalObject : IDistributedInterface
     {
         /// <summary>
+        /// Get the local state for this local object.
+        /// </summary>
+        /// <remarks>
+        /// This is called when a new peer connects, and we need to create proxies on the new peer for the
+        /// state of an owner object. The owner's LocalObject's LocalState is passed to instantiate the new
+        /// proxies.
+        /// </remarks>
+        public abstract LocalState LocalState { get; }
+
+        /// <summary>
         /// Delete this object.
         /// </summary>
         /// <remarks>

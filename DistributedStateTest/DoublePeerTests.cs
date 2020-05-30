@@ -12,10 +12,10 @@ namespace DistributedState.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first peer under test
-            using Peer peer = new Peer(testWorkQueue, Peer.DefaultListenPort, isListener: true);
+            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: true);
 
             // construct second peer
-            using Peer peer2 = new Peer(testWorkQueue, Peer.DefaultListenPort, isListener: false);
+            using DistributedPeer peer2 = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: false);
 
             // peer could start announcing also, but peer2 isn't listening so it wouldn't be detectable
             peer2.Announce();

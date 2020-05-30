@@ -5,23 +5,6 @@ using System.Text;
 
 namespace DistributedState
 {
-    public class DistributedObject
-    {
-        /// <summary>
-        /// Is this object the original, owner instance?
-        /// </summary>
-        /// <remarks>
-        /// Owner objects relay commands to proxies, along with updating local state;
-        /// proxy objects relay command requests to owners, and update local state only on commands from owners.
-        /// </remarks>
-        public readonly bool IsOwner;
-
-        protected DistributedObject(bool isOwner)
-        {
-            IsOwner = isOwner;
-        }
-    }
-
     /// <summary>
     /// Base class for distributed objects.
     /// </summary>
@@ -35,7 +18,7 @@ namespace DistributedState
     /// The LocalObject derived class implements an interface (derived from IDistributedObject) which presents
     /// all the methods that can be invoked on those objects.
     /// 
-    /// The DistributedObject derived class also implemnets that same interface.  If the DistributedObject is
+    /// The DistributedObject derived class also implements that same interface.  If the DistributedObject is
     /// an owner, it will relay calls as commands to its proxies (as well as to its local object); if the
     /// DistributedObject is a proxy, it will relay the message as a command request to the owner.
     /// If the DistributedObject is a proxy and receives a command from the owner, it relays it to the proxy's
@@ -48,17 +31,40 @@ namespace DistributedState
     /// 3) Proxies whose methods are invoked do not update any local state, but only relay command requests to
     ///    the owner; the owner is always authoritative about state.
     /// </remarks>
+    public class DistributedObject
+    {
+        /// <summary>
+        /// Is this object the original, owner instance?
+        /// </summary>
+        /// <remarks>
+        /// Owner objects relay commands to proxies, along with updating local state;
+        /// proxy objects relay command requests to owners, and update local state only on commands from owners.
+        /// </remarks>
+        public readonly bool IsOwner;
+
+        public readonly LocalObject LocalObject;
+
+        protected DistributedObject(bool isOwner, LocalObject localObject)
+        {
+            IsOwner = isOwner;
+            LocalObject = localObject;
+        }
+    }
+
+    /// <summary>
+    /// More strongly typed base class, for convenience of derived classes.
+    /// </summary>
     public class DistributedObject<TLocalObject> : DistributedObject
         where TLocalObject : LocalObject
     {
         /// <summary>
         /// The local object wrapped by this distributed object (be it owner or proxy).
         /// </summary>
-        public readonly TLocalObject LocalObject;
+        public readonly TLocalObject TypedLocalObject;
 
-        protected DistributedObject(bool isOwner, TLocalObject localObject) : base(isOwner)
+        protected DistributedObject(bool isOwner, TLocalObject localObject) : base(isOwner, localObject)
         {
-            LocalObject = localObject;
+            TypedLocalObject = localObject;
         }
     }
 }

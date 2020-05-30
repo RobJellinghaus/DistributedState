@@ -18,9 +18,11 @@ namespace DistributedState
     /// 
     /// The Peer's first responsibility is discovering other Peers. 
     /// </remarks>
-    public class Peer : IPollEvents, IDisposable
+    public class DistributedPeer : IPollEvents, IDisposable
     {
         private static string RequestKey = "";
+
+        #region Listener inner class
 
         /// <summary>
         /// Listener handles unconnected messages (broadcasts), as well as connected
@@ -28,8 +30,8 @@ namespace DistributedState
         /// </summary>
         private class Listener : INetEventListener
         {
-            readonly Peer Peer;
-            internal Listener(Peer peer)
+            readonly DistributedPeer Peer;
+            internal Listener(DistributedPeer peer)
             {
                 Peer = peer;
             }
@@ -43,14 +45,14 @@ namespace DistributedState
                 // TBD what to do here
             }
 
-            public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
+            public void OnNetworkLatencyUpdate(NetPeer netPeer, int latency)
             {
                 // TBD whether anything should be done here
             }
 
-            public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+            public void OnNetworkReceive(NetPeer netPeer, NetPacketReader reader, DeliveryMethod deliveryMethod)
             {
-                Peer.netPacketProcessor.ReadAllPackets(reader, peer);
+                Peer.netPacketProcessor.ReadAllPackets(reader, netPeer);
             }
 
             public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader, UnconnectedMessageType messageType)
@@ -58,16 +60,38 @@ namespace DistributedState
                 Peer.netPacketProcessor.ReadAllPackets(reader, remoteEndPoint);
             }
 
-            public void OnPeerConnected(NetPeer peer)
+            public void OnPeerConnected(NetPeer netPeer)
             {
-                // TODO: Send all create messages to create all proxies for all locally owned objects.
+                Peer.proxies.Add(netPeer, new Dictionary<int, DistributedObject>());
+
+                Peer.SendProxiesToPeer(netPeer);
             }
 
-            public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
+            /// <summary>
+            /// Handle a disconnected peer by deleting all that peer's proxies' local objects, and dropping
+            /// all the proxies.
+            /// </summary>
+            public void OnPeerDisconnected(NetPeer netPeer, DisconnectInfo disconnectInfo)
             {
-                // TODO: clean up all proxies owned by that peer
+                if (Peer.proxies.TryGetValue(netPeer, out Dictionary<int, DistributedObject> peerObjects))
+                {
+                    // delete them all
+                    foreach (DistributedObject proxy in peerObjects.Values)
+                    {
+                        // Delete the local object only; calling Delete() on the proxy itself would result
+                        // in a delete request to the owning peer, which just became inaccessible!
+                        proxy.LocalObject.Delete();
+                    }
+
+                    // and drop the whole collection of proxies
+                    Peer.proxies.Remove(netPeer);
+                }
             }
         }
+
+        #endregion
+
+        #region Fields and properties
 
         /// <summary>
         /// Random port that happened to be, not only open, but with no other UDP or TCP ports in the 3????? range
@@ -120,6 +144,30 @@ namespace DistributedState
         private readonly IWorkQueue workQueue;
 
         /// <summary>
+        /// Map from owner object ID to owner object instance.
+        /// </summary>
+        /// <remarks>
+        /// Note that these IDs are unique only within this Peer; each Peer defines its own ID space
+        /// for its owned objects.
+        /// </remarks>
+        private Dictionary<int, DistributedObject> owners = new Dictionary<int, DistributedObject>();
+
+        /// <summary>
+        /// The next id to assign to a new owning object.
+        /// </summary>
+        private int nextOwnerId;
+
+        /// <summary>
+        /// Map from NetPeer to proxy ID to proxy instance.
+        /// </summary>
+        /// <remarks>
+        /// Note that each ID is unique only within that peer's collection; each peer defines its
+        /// own proxies' ID space.
+        /// </remarks>
+        private Dictionary<NetPeer, Dictionary<int, DistributedObject>> proxies
+            = new Dictionary<NetPeer, Dictionary<int, DistributedObject>>();
+
+        /// <summary>
         /// How many peer announcements has this peer received?
         /// </summary>
         /// <remarks>
@@ -135,7 +183,13 @@ namespace DistributedState
         /// </remarks>
         public int PeerAnnounceResponseCount { get; private set; }
 
-        public Peer(
+        public int PeerCount => netManager.ConnectedPeersCount;
+
+        #endregion
+
+        #region Construction and disposal
+
+        public DistributedPeer(
             IWorkQueue workQueue,
             ushort listenPort,
             bool isListener = true)
@@ -183,16 +237,17 @@ namespace DistributedState
             }
         }
 
-        public static long IPV4AddressInHostOrder(IPAddress address)
+        /// <summary>
+        /// Dispose of this Peer, reclaiming network resources.
+        /// </summary>
+        public void Dispose()
         {
-#pragma warning disable CS0618 // Type or member is obsolete
-            long ipv4AddressAddress = address.Address;
-#pragma warning restore CS0618 // Type or member is obsolete
-            return IPAddress.NetworkToHostOrder(ipv4AddressAddress);
-
+            netManager.Stop(true);
         }
 
-        public int PeerCount => netManager.ConnectedPeersCount;
+        #endregion
+
+        #region Sending
 
         /// <summary>
         /// Send an announcement message, and schedule the next such message.
@@ -240,6 +295,37 @@ namespace DistributedState
             netPacketProcessor.Write(netDataWriter, message);
             netManager.SendUnconnectedMessage(netDataWriter, endpoint);
         }
+
+        /// <summary>
+        /// Send this message directly, as a reliable (sequenced) message.
+        /// </summary>
+        private void SendReliableMessage<T>(T message, NetPeer netPeer)
+            where T : class, new()
+        {
+            netDataWriter.Reset();
+            netPacketProcessor.Write(netDataWriter, message);
+            netPeer.Send(netDataWriter, DeliveryMethod.ReliableOrdered);
+        }
+
+        /// <summary>
+        /// Send create messages for all our owned objects to this peer.
+        /// </summary>
+        private void SendProxiesToPeer(NetPeer netPeer)
+        {
+            foreach (KeyValuePair<int, DistributedObject> entry in owners)
+            {
+                var createMessage = new CreateMessage
+                {
+                    InitialState = entry.Value.LocalObject.LocalState
+                };
+
+                SendReliableMessage(createMessage, netPeer);
+            }
+        }
+
+        #endregion
+
+        #region Receiving
 
         /// <summary>
         /// An announcement has been received (via broadcast); react accordingly.
@@ -304,12 +390,6 @@ namespace DistributedState
             netManager.PollEvents();
         }
 
-        /// <summary>
-        /// Dispose of this Peer, reclaiming network resources.
-        /// </summary>
-        public void Dispose()
-        {
-            netManager.Stop(true);
-        }
+        #endregion
     }
 }

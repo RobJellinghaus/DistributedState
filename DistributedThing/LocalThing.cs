@@ -6,17 +6,22 @@ using System.Text;
 namespace DistributedThing
 {
     using DistributedState;
+    using System.Runtime.CompilerServices;
 
     public class LocalThing : LocalObject
     {
+        private LocalThingState localState;
+
         public LocalThing(LocalThingState initialState)
         {
-            // TODO: initialize!
+            localState = initialState;
         }
+
+        public override LocalState LocalState => localState;
 
         public override void Delete()
         {
-            throw new NotImplementedException();
+            // do nothing... accept the void
         }
     }
 }

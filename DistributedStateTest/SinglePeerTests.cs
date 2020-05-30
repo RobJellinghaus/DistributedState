@@ -10,7 +10,7 @@ namespace DistributedState.Test
         public void ConstructPeer()
         {
             var testWorkQueue = new TestWorkQueue();
-            using Peer peer = new Peer(testWorkQueue, Peer.DefaultListenPort);
+            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort);
 
             Assert.IsNotNull(peer);
 
@@ -32,10 +32,10 @@ namespace DistributedState.Test
             var testBroadcastListener = new TestBroadcastNetEventListener();
             var testNetManager = new TestNetManager(new NetManager(testBroadcastListener));
             testNetManager.NetManager.BroadcastReceiveEnabled = true;
-            testNetManager.NetManager.Start(Peer.DefaultListenPort);
+            testNetManager.NetManager.Start(DistributedPeer.DefaultListenPort);
 
             // the peer under test
-            using Peer peer = new Peer(testWorkQueue, Peer.DefaultListenPort, isListener: false);
+            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: false);
 
             // start announcing
             peer.Announce();
@@ -59,7 +59,7 @@ namespace DistributedState.Test
             Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
             ValidateAnnounceMessage(announceMessage, peer);
 
-            static void ValidateAnnounceMessage(object possibleMessage, Peer peer)
+            static void ValidateAnnounceMessage(object possibleMessage, DistributedPeer peer)
             {
                 AnnounceMessage announceMessage = possibleMessage as AnnounceMessage;
                 Assert.IsNotNull(announceMessage);
@@ -75,7 +75,7 @@ namespace DistributedState.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the peer under test
-            using Peer peer = new Peer(testWorkQueue, Peer.DefaultListenPort, isListener: true);
+            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: true);
 
             // start announcing
             peer.Announce();
@@ -102,10 +102,10 @@ namespace DistributedState.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first peer under test
-            using Peer peer = new Peer(testWorkQueue, Peer.DefaultListenPort, isListener: true);
+            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: true);
 
             // construct second peer
-            using Peer peer2 = new Peer(testWorkQueue, Peer.DefaultListenPort, isListener: false);
+            using DistributedPeer peer2 = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: false);
 
             // peer could start announcing also, but peer2 isn't listening so it wouldn't be detectable
             peer2.Announce();
