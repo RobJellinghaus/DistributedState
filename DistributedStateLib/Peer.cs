@@ -60,11 +60,17 @@ namespace DistributedState
 
             public void OnPeerConnected(NetPeer peer)
             {
-                // TODO: send the peer all locally known objects
+                // Add this peer's IPV4 address to the known set.
+                Peer.knownPeerIPV4Addresses.Add(IPV4AddressInHostOrder(peer.EndPoint.Address));
+
+                // Send all create messages to create all proxies for all locally owned objects.
             }
 
             public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
+                // Remove this peer's IPV4 address from the known set.
+                Peer.knownPeerIPV4Addresses.Add(IPV4AddressInHostOrder(peer.EndPoint.Address));
+
                 // TODO: clean up all proxies owned by that peer
             }
         }
@@ -161,10 +167,7 @@ namespace DistributedState
             IPAddress ipv4Address = host
                 .AddressList
                 .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-#pragma warning disable CS0618 // Type or member is obsolete
-            long ipv4AddressAddress = ipv4Address.Address;
-#pragma warning restore CS0618 // Type or member is obsolete
-            IPV4Address = IPAddress.NetworkToHostOrder(ipv4AddressAddress);
+            IPV4Address = IPV4AddressInHostOrder(ipv4Address);
 
             netManager = new NetManager(new Listener(this))
             {
@@ -194,6 +197,15 @@ namespace DistributedState
             }
         }
 
+        public static long IPV4AddressInHostOrder(IPAddress address)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            long ipv4AddressAddress = address.Address;
+#pragma warning restore CS0618 // Type or member is obsolete
+            return IPAddress.NetworkToHostOrder(ipv4AddressAddress);
+
+        }
+
         public int PeerCount => netManager.ConnectedPeersCount;
 
         /// <summary>
@@ -218,6 +230,9 @@ namespace DistributedState
             workQueue.RunLater(Announce, AnnounceDelayMsec);
         }
 
+        /// <summary>
+        /// Send this message as a broadcast.
+        /// </summary>
         private void SendBroadcastMessage<T>(T message)
             where T : class, new()
         {
@@ -226,6 +241,9 @@ namespace DistributedState
             netManager.SendBroadcast(netDataWriter, ListenPort);
         }
 
+        /// <summary>
+        /// Send this message directly, as an unconnected message.
+        /// </summary>
         private void SendUnconnectedMessage<T>(T message, IPEndPoint endpoint)
             where T : class, new()
         {
@@ -235,9 +253,8 @@ namespace DistributedState
         }
 
         /// <summary>
-        /// An announcement has been received via broadcast; react accordingly.
+        /// An announcement has been received (via broadcast); react accordingly.
         /// </summary>
-        /// <param name="message"></param>
         private void OnAnnounceReceived(AnnounceMessage message, IPEndPoint endpoint)
         {
             // heed only ipv4 for now... TBD what to do about this
@@ -265,7 +282,7 @@ namespace DistributedState
         }
 
         /// <summary>
-        /// An announcement has been received via broadcast; react accordingly.
+        /// An announcement has been received (via unconnected messaeg); react accordingly.
         /// </summary>
         private void OnAnnounceResponseReceived(AnnounceResponseMessage message, IPEndPoint endpoint)
         {
@@ -277,7 +294,7 @@ namespace DistributedState
                 // we shouldn't know this peer yet, let's check.
                 if (netManager.ConnectedPeerList.Any(peer => peer.EndPoint.Equals(endpoint)))
                 {
-                    // surprise, we do! must have been a rave.
+                    // surprise, we do! must have been a race.
                     return;
                 }
 
@@ -298,6 +315,9 @@ namespace DistributedState
             netManager.PollEvents();
         }
 
+        /// <summary>
+        /// Dispose of this Peer, reclaiming network resources.
+        /// </summary>
         public void Dispose()
         {
             netManager.Stop(true);
