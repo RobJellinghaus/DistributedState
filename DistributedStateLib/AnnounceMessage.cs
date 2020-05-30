@@ -12,9 +12,9 @@ namespace DistributedState
     public class AnnounceMessage
     {
         /// <summary>
-        /// Host-ordered IPV4 address of the announcer.
+        /// Socket address of the announcer.
         /// </summary>
-        public long AnnouncerIPV4Address { get; set; }
+        public SerializedSocketAddress AnnouncerSocketAddress { get; set; }
 
         /// <summary>
         /// The announcer intends to host audio for the whole group.
@@ -25,8 +25,8 @@ namespace DistributedState
         public bool AnnouncerIsHostingAudio { get; set; }
 
         /// <summary>
-        /// The host-ordered IPV4 addresses of peers already known to this Peer.
+        /// The socket addresses of peers already known to this Peer.
         /// </summary>
-        public long[] KnownPeers { get; set; }
+        public SerializedSocketAddress[] KnownPeers { get; set; }
     }
 }

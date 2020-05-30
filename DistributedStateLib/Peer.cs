@@ -60,17 +60,11 @@ namespace DistributedState
 
             public void OnPeerConnected(NetPeer peer)
             {
-                // Add this peer's IPV4 address to the known set.
-                Peer.knownPeerIPV4Addresses.Add(IPV4AddressInHostOrder(peer.EndPoint.Address));
-
-                // Send all create messages to create all proxies for all locally owned objects.
+                // TODO: Send all create messages to create all proxies for all locally owned objects.
             }
 
             public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
             {
-                // Remove this peer's IPV4 address from the known set.
-                Peer.knownPeerIPV4Addresses.Add(IPV4AddressInHostOrder(peer.EndPoint.Address));
-
                 // TODO: clean up all proxies owned by that peer
             }
         }
@@ -101,10 +95,9 @@ namespace DistributedState
         public readonly ushort ListenPort;
 
         /// <summary>
-        /// The IPEndPoint as an IPV4 address, in host order; 
-        /// since we are wifi only and assume IPV4 is locally available. (TBD if true)
+        /// The address of this Peer.
         /// </summary>
-        public readonly long IPV4Address;
+        public readonly SocketAddress SocketAddress;
 
         /// <summary>
         /// The LiteNetLib instance for handling broadcast traffic; has no peers.
@@ -142,14 +135,6 @@ namespace DistributedState
         /// </remarks>
         public int PeerAnnounceResponseCount { get; private set; }
 
-        /// <summary>
-        /// Known IPV4 addresses of other peers.
-        /// </summary>
-        /// <remarks>
-        /// This set is populated when Announce messages are received.
-        /// </remarks>
-        private HashSet<long> knownPeerIPV4Addresses = new HashSet<long>();
-
         public Peer(
             IWorkQueue workQueue,
             ushort listenPort,
@@ -167,8 +152,8 @@ namespace DistributedState
             IPAddress ipv4Address = host
                 .AddressList
                 .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            IPV4Address = IPV4AddressInHostOrder(ipv4Address);
-
+            SocketAddress = new IPEndPoint(ipv4Address, listenPort).Serialize();
+            
             netManager = new NetManager(new Listener(this))
             {
                 BroadcastReceiveEnabled = true,
@@ -176,6 +161,7 @@ namespace DistributedState
             };
 
             netPacketProcessor = new NetPacketProcessor();
+            SerializedSocketAddress.RegisterWith(netPacketProcessor);
             netPacketProcessor.SubscribeReusable<AnnounceMessage, IPEndPoint>(OnAnnounceReceived);
             netPacketProcessor.SubscribeReusable<AnnounceResponseMessage, IPEndPoint>(OnAnnounceResponseReceived);
 
@@ -219,9 +205,12 @@ namespace DistributedState
         {
             AnnounceMessage message = new AnnounceMessage
             {
-                AnnouncerIPV4Address = IPV4Address,
+                AnnouncerSocketAddress = new SerializedSocketAddress(SocketAddress),
                 AnnouncerIsHostingAudio = false,
-                KnownPeers = new long[0]
+                KnownPeers = netManager
+                    .ConnectedPeerList
+                    .Select(peer => new SerializedSocketAddress(peer.EndPoint.Serialize()))
+                    .ToArray()
             };
 
             SendBroadcastMessage(message);
@@ -270,13 +259,13 @@ namespace DistributedState
                 }
 
                 // did this peer know us already? (typical scenario given re-announcements)
-                if (message.KnownPeers.Contains(IPV4Address))
+                if (message.KnownPeers.Select(ssa => ssa.SocketAddress).Contains(SocketAddress))
                 {
                     return;
                 }
 
                 // send announce response
-                AnnounceResponseMessage response = new AnnounceResponseMessage { ResponderIPV4Address = IPV4Address };
+                AnnounceResponseMessage response = new AnnounceResponseMessage { };
                 SendUnconnectedMessage(response, endpoint);
             }
         }

@@ -63,7 +63,7 @@ namespace DistributedState.Test
             {
                 AnnounceMessage announceMessage = possibleMessage as AnnounceMessage;
                 Assert.IsNotNull(announceMessage);
-                Assert.AreEqual(peer.IPV4Address, announceMessage.AnnouncerIPV4Address);
+                Assert.AreEqual(peer.SocketAddress, announceMessage.AnnouncerSocketAddress.SocketAddress);
                 Assert.AreEqual(0, announceMessage.KnownPeers.Length);
             }
         }
