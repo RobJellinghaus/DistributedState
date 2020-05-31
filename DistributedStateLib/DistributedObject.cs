@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Base class for distributed objects.
@@ -39,10 +39,19 @@ namespace DistributedState
         /// </remarks>
         public readonly bool IsOwner;
 
+        /// <summary>
+        /// The id of this object; unique within its owning DistributedPeer.
+        /// </summary>
+        public readonly int Id;
+
+        /// <summary>
+        /// The local object which implements the local behavior of the distributed object.
+        /// </summary>
         public readonly LocalObject LocalObject;
 
-        protected DistributedObject(bool isOwner, LocalObject localObject)
+        protected DistributedObject(int id, bool isOwner, LocalObject localObject)
         {
+            Id = id;
             IsOwner = isOwner;
             LocalObject = localObject;
         }
@@ -59,7 +68,8 @@ namespace DistributedState
         /// </summary>
         public readonly TLocalObject TypedLocalObject;
 
-        protected DistributedObject(bool isOwner, TLocalObject localObject) : base(isOwner, localObject)
+        protected DistributedObject(int id, bool isOwner, TLocalObject localObject)
+            : base(id, isOwner, localObject)
         {
             TypedLocalObject = localObject;
         }

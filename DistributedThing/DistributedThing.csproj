@@ -5,6 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Reference Include="LiteNetLib">
+      <HintPath>..\..\LiteNetLib\LiteNetLib\bin\Debug\netstandard2.0\LiteNetLib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\DistributedStateLib\DistributedStateLib.csproj" />
   </ItemGroup>
 

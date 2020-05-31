@@ -1,8 +1,8 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedThing
+namespace Distributed.Thing
 {
-    using DistributedState;
+    using Distributed.State;
 
     public interface IThing : IDistributedInterface
     {

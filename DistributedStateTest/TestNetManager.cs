@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using LiteNetLib;
 
-namespace DistributedState.Test
+namespace Distributed.State.Test
 {
     /// <summary>
     /// Test class wrapping a NetManager.

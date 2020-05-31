@@ -7,7 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Peer participant in the distributed system.
@@ -185,6 +185,18 @@ namespace DistributedState
 
         public int PeerCount => netManager.ConnectedPeersCount;
 
+        public Dictionary<int, DistributedObject> Owners => owners;
+
+        public IEnumerable<NetPeer> NetPeers => netManager.ConnectedPeerList;
+
+        public Dictionary<int, DistributedObject> ProxiesForPeer(NetPeer peer)
+        {
+            Contract.Requires(netManager.ConnectedPeerList.Contains(peer));
+            Contract.Requires(proxies.ContainsKey(peer));
+
+            return proxies[peer];
+        }
+
         #endregion
 
         #region Construction and disposal
@@ -192,7 +204,8 @@ namespace DistributedState
         public DistributedPeer(
             IWorkQueue workQueue,
             ushort listenPort,
-            bool isListener = true)
+            bool isListener = true,
+            int disconnectTimeout = -1)
         {
             Contract.Requires(listenPort != 0);
 
@@ -207,12 +220,17 @@ namespace DistributedState
                 .AddressList
                 .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
             SocketAddress = new IPEndPoint(ipv4Address, listenPort).Serialize();
-            
+
             netManager = new NetManager(new Listener(this))
             {
                 BroadcastReceiveEnabled = true,
                 UnconnectedMessagesEnabled = true
             };
+
+            if (disconnectTimeout != -1)
+            {
+                netManager.DisconnectTimeout = disconnectTimeout;
+            }
 
             netPacketProcessor = new NetPacketProcessor();
             SerializedSocketAddress.RegisterWith(netPacketProcessor);
@@ -249,19 +267,55 @@ namespace DistributedState
 
         #region Managing DistributedObjects
 
+
+        /// <summary>
+        /// Get the next owner ID for this DistributedPeer.
+        /// </summary>
+        /// <remarks>
+        /// This allows external code to create its own owner DistributedObjects, giving them fresh
+        /// IDs at construction.
+        /// </remarks>
+        public int NextOwnerId()
+        {
+            return ++nextOwnerId;
+        }
+
         /// <summary>
         /// This is a new owner DistributedObject entering the system on this peer.
         /// </summary>
-        public void Create(DistributedObject distributedObject)
+        public void AddOwner(DistributedObject distributedObject)
         {
-            int id = nextOwnerId++;
-            owners.Add(id, distributedObject);
+            owners.Add(distributedObject.Id, distributedObject);
             
             // and tell all the peers
             foreach (NetPeer netPeer in netManager.ConnectedPeerList)
             {
                 SendProxiesToPeer(netPeer);
             }
+        }
+
+        /// <summary>
+        /// This is a new proxy being created on this peer, owned by netPeer.
+        /// </summary>
+        public void AddProxy(NetPeer netPeer, DistributedObject proxy)
+        {
+            Contract.Requires(!proxy.IsOwner);
+
+            proxies[netPeer].Add(proxy.Id, proxy);
+        }
+
+        /// <summary>
+        /// Add a subscription for this message type.
+        /// </summary>
+        /// <remarks>
+        /// Since the only polymorphism supported by LiteNetLib is for packets (e.g. messages),
+        /// adding new DistributedObject implementations requires adding new messages, which requires
+        /// subscribing to those new messages.
+        /// </remarks>
+        public void SubscribeReusable<TMessage, TUserData>(Action<TMessage, TUserData> action)
+            where TMessage : class, new()
+        {
+            netPacketProcessor.SubscribeReusable(action);
         }
 
         #endregion
@@ -318,7 +372,7 @@ namespace DistributedState
         /// <summary>
         /// Send this message directly, as a reliable (sequenced) message.
         /// </summary>
-        private void SendReliableMessage<T>(T message, NetPeer netPeer)
+        public void SendReliableMessage<T>(T message, NetPeer netPeer)
             where T : class, new()
         {
             netDataWriter.Reset();
@@ -333,19 +387,8 @@ namespace DistributedState
         {
             foreach (KeyValuePair<int, DistributedObject> entry in owners)
             {
-                SendCreateMessage(netPeer, entry.Key, entry.Value);
+                entry.Value.LocalObject.SendProxyCreateMessage(this, netPeer);
             }
-        }
-
-        private void SendCreateMessage(NetPeer netPeer, int id, DistributedObject distributedObject)
-        {
-            var createMessage = new CreateMessage
-            {
-                Id = id,
-                InitialState = distributedObject.LocalObject.LocalState
-            };
-
-            SendReliableMessage(createMessage, netPeer);
         }
 
         #endregion
@@ -401,6 +444,14 @@ namespace DistributedState
                 // So, connect away.
                 netManager.Connect(endpoint, RequestKey);
             }
+        }
+
+        public void OnCreateReceived(NetPeer creatingPeer, DistributedObject newProxy)
+        {
+            // make sure it's actually a proxy
+            Contract.Requires(!newProxy.IsOwner);
+
+            proxies[creatingPeer].Add(newProxy.Id, newProxy);
         }
 
         /// <summary>

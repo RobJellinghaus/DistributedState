@@ -1,19 +1,20 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
+using Distributed.State;
+using LiteNetLib;
+using System;
 
-namespace DistributedThing
+namespace Distributed.Thing
 {
-    using DistributedState;
-
     public class LocalThing : LocalObject
     {
-        private LocalThingState localState;
-
-        public LocalThing(LocalThingState initialState)
+        public LocalThing(int id) : base(id)
         {
-            localState = initialState;
         }
 
-        public override LocalState LocalState => localState;
+        public override void SendProxyCreateMessage(DistributedPeer distributedPeer, NetPeer netPeer)
+        {
+            distributedPeer.SendReliableMessage(new ThingMessages.Create(Id), netPeer);
+        }
 
         public override void Delete()
         {

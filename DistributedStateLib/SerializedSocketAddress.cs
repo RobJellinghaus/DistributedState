@@ -2,7 +2,7 @@
 using System.Net;
 using System.Net.Sockets;
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Wrapper struct which enables serializing a SocketAddress in a LiteNetLib message.

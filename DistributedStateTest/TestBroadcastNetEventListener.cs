@@ -5,7 +5,7 @@ using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 
-namespace DistributedState.Test
+namespace Distributed.State.Test
 {
     class TestBroadcastNetEventListener : INetEventListener
     {

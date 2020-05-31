@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using System.Diagnostics;
 
-namespace DistributedState
+namespace Distributed.State
 {
     public static class Contract
     {

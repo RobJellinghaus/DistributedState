@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace DistributedState.Test
+namespace Distributed.State.Test
 {
     /// <summary>
     /// Methods to enter polling sleep loops until conditions are met or timeouts happen.
@@ -14,7 +14,7 @@ namespace DistributedState.Test
     /// </remarks>
     public static class WaitUtils
     {
-        public static int SleepMsec = 50;
+        public static int SleepMsec = 5;
         public static int IterationsBeforeFailure = 20;
 
         /// <summary>

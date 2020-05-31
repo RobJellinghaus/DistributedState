@@ -1,8 +1,10 @@
 // Copyright (c) 2020 by Rob Jellinghaus.
+using Distributed.Thing;
 using LiteNetLib;
 using NUnit.Framework;
+using System.Linq;
 
-namespace DistributedState.Test
+namespace Distributed.State.Test
 {
     public class SinglePeerTests
     {
@@ -97,33 +99,23 @@ namespace DistributedState.Test
         }
 
         [Test]
-        public void PeerConnectToPeer()
+        public void PeerCreateObjects()
         {
             var testWorkQueue = new TestWorkQueue();
 
             // the first peer under test
             using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: true);
 
-            // construct second peer
-            using DistributedPeer peer2 = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: false);
+            // create a Distributed.Thing
+            var distributedThing = new DistributedThing(
+                1,
+                isOwner: true,
+                localThing: new LocalThing(1));
 
-            // peer could start announcing also, but peer2 isn't listening so it wouldn't be detectable
-            peer2.Announce();
+            peer.AddOwner(distributedThing);
 
-            // the list of all pollable objects, to ensure forward progress
-            IPollEvents[] pollables = new IPollEvents[] { peer, peer2 };
-
-            // should have received Announce message
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 1);
-
-            // now execute pending work
-            testWorkQueue.PollEvents();
-
-            // should still be one queued item -- the *next* announce message
-            Assert.AreEqual(1, testWorkQueue.Count);
-
-            // wait to receive second Announce
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 2);
+            Assert.AreEqual(1, peer.Owners.Count);
+            Assert.True(peer.Owners.Values.First() == distributedThing);
         }
     }
 }

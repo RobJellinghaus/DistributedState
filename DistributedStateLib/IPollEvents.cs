@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Poll events on this object.

@@ -1,13 +1,17 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
-using DistributedState;
+using Distributed.State;
 using System;
 
-namespace DistributedThing
+namespace Distributed.Thing
 {
     public class DistributedThing : DistributedObject<LocalThing>, IThing
     {
-        public DistributedThing(bool isOwner, LocalThing localThing) : base(isOwner, localThing)
+        public DistributedThing(int id, bool isOwner, LocalThing localThing)
+            : base(id, isOwner, localThing)
         {
+            // ensure consistent IDs
+            Contract.Requires(id == localThing.Id);
+
             // TODO: create proxies if owner
         }
 

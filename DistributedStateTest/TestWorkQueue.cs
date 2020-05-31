@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DistributedState.Test
+namespace Distributed.State.Test
 {
     /// <summary>
     /// Work queue that runs work when polled.

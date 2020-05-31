@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedThing
+namespace Distributed.Thing
 {
     class ThingCommand
     {

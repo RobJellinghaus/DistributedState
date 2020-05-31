@@ -1,7 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using System;
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Allow scheduling work for later.

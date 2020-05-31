@@ -1,9 +1,10 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
+using Distributed.Thing;
 using LiteNetLib.Utils;
 using NUnit.Framework;
 using System.Net;
 
-namespace DistributedState.Test
+namespace Distributed.State.Test
 {
     public class SerializationTests
     {
@@ -34,6 +35,30 @@ namespace DistributedState.Test
 
             Assert.IsNotNull(readPacket);
             Assert.AreEqual(serializedSocketAddress.SocketAddress, readPacket.SerializedSocketAddress.SocketAddress);
+        }
+
+        [Test]
+        public void TestThingMessage()
+        {
+            // Test whether the serialization framework supports property inheritance.
+            // ThingMessage.Create derives from CreateMessage which has an Id property.
+            var createThingMessage = new ThingMessages.Create(1);
+
+            var writer = new NetDataWriter();
+            NetPacketProcessor processor = new NetPacketProcessor();
+
+            processor.Write(writer, createThingMessage);
+
+            var reader = new NetDataReader(writer.CopyData());
+            ThingMessages.Create readMessage = null;
+            processor.Subscribe(
+                createMessage => readMessage = createMessage,
+                () => new ThingMessages.Create());
+
+            processor.ReadAllPackets(reader);
+
+            Assert.IsNotNull(readMessage);
+            Assert.AreEqual(1, readMessage.Id);
         }
     }
 }

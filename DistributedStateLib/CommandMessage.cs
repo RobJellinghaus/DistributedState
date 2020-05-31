@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Message sent by owner objects to proxies.
@@ -11,13 +11,8 @@ namespace DistributedState
     /// 
     /// Note that deleting an object is done by sending a CommandMessage containing a DeleteCommand.
     /// </remarks>
-    public class CommandMessage
+    public abstract class CommandMessage
     {
-        /// <summary>
-        /// Command to execute.
-        /// </summary>
-        public Command Command { get; set; }
-
         /// <summary>
         /// The object ID.
         /// </summary>
@@ -36,5 +31,10 @@ namespace DistributedState
         /// CommandMessage type for both purposes.  The IsRequest field distinguishes authoritative
         /// commands from racy requests.</remarks>
         public bool IsRequest { get; set; }
+
+        /// <summary>
+        /// Invoke this CommandMessage, given this Peer it's invoking within, and this object that exists locally.
+        /// </summary>
+        public abstract void Invoke(DistributedPeer distributedPeer, DistributedObject distributedObject);
     }
 }

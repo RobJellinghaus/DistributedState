@@ -1,6 +1,6 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedState
+namespace Distributed.State
 {
     /// <summary>
     /// Message sent by Peers that hear announcements which don't mention them.

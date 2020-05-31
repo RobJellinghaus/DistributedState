@@ -1,6 +1,9 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
-namespace DistributedState
+using LiteNetLib;
+using System;
+
+namespace Distributed.State
 {
     /// <summary>
     /// Base class for local object implementations that handle the local behavior of a distributed object.
@@ -12,14 +15,32 @@ namespace DistributedState
     public abstract class LocalObject : IDistributedInterface
     {
         /// <summary>
-        /// Get the local state for this local object.
+        /// ID of this local object; same as its containing distributed object's ID.
         /// </summary>
         /// <remarks>
-        /// This is called when a new peer connects, and we need to create proxies on the new peer for the
-        /// state of an owner object. The owner's LocalObject's LocalState is passed to instantiate the new
-        /// proxies.
+        /// TBD whether it would be better to have the local object just point to the distributed object.
         /// </remarks>
-        public abstract LocalState LocalState { get; }
+        public int Id { get; }
+
+        public LocalObject(int id)
+        {
+            Id = id;
+        }
+
+        /// <summary>
+        /// Get an action that will send the right CreateMessage to create a proxy for this object.
+        /// </summary>
+        /// <remarks>
+        /// The LiteNetLib serialization library does not support polymorphism except for toplevel packets
+        /// being sent (e.g. the only dynamic type mapping is in the NetPacketProcessor which maps packets
+        /// to subscription callbacks).  So we can't make a generic CreateMessage with polymorphic payload.
+        /// Instead, when it's time to create a proxy, we get an Action which will send the right CreateMessage
+        /// to create the right proxy.
+        /// 
+        /// In practice this is only called on the local object held by an owning object, since only owning
+        /// objects need to create proxies.
+        /// </remarks>
+        public abstract void SendProxyCreateMessage(DistributedPeer distributedPeer, NetPeer targetPeer);
 
         /// <summary>
         /// Delete this object.
