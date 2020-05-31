@@ -247,6 +247,25 @@ namespace DistributedState
 
         #endregion
 
+        #region Managing DistributedObjects
+
+        /// <summary>
+        /// This is a new owner DistributedObject entering the system on this peer.
+        /// </summary>
+        public void Create(DistributedObject distributedObject)
+        {
+            int id = nextOwnerId++;
+            owners.Add(id, distributedObject);
+            
+            // and tell all the peers
+            foreach (NetPeer netPeer in netManager.ConnectedPeerList)
+            {
+                SendProxiesToPeer(netPeer);
+            }
+        }
+
+        #endregion
+
         #region Sending
 
         /// <summary>
@@ -314,13 +333,19 @@ namespace DistributedState
         {
             foreach (KeyValuePair<int, DistributedObject> entry in owners)
             {
-                var createMessage = new CreateMessage
-                {
-                    InitialState = entry.Value.LocalObject.LocalState
-                };
-
-                SendReliableMessage(createMessage, netPeer);
+                SendCreateMessage(netPeer, entry.Key, entry.Value);
             }
+        }
+
+        private void SendCreateMessage(NetPeer netPeer, int id, DistributedObject distributedObject)
+        {
+            var createMessage = new CreateMessage
+            {
+                Id = id,
+                InitialState = distributedObject.LocalObject.LocalState
+            };
+
+            SendReliableMessage(createMessage, netPeer);
         }
 
         #endregion

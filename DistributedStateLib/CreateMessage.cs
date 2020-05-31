@@ -1,8 +1,4 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
-using LiteNetLib.Utils;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DistributedState
 {
@@ -14,6 +10,11 @@ namespace DistributedState
     /// </remarks>
     public class CreateMessage
     {
+        /// <summary>
+        /// Id of this object (in the originating peer's ID space).
+        /// </summary>
+        public int Id { get; set; }
+
         /// <summary>
         /// The initial state of the proxy object.
         /// </summary>

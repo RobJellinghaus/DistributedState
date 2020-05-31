@@ -1,5 +1,4 @@
 // Copyright (c) 2020 by Rob Jellinghaus.
-using LiteNetLib;
 using NUnit.Framework;
 
 namespace DistributedState.Test
