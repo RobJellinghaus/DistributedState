@@ -5,6 +5,9 @@ This is a .NET Standard application with unit testing, intended as an experiment
 a distributed LAN system I'm working on that wants both reliable and unreliable peer-to-peer
 networking, locally only.
 
+At the moment (as of early June 2020) the library is under very active development and is by no
+means feature complete, even for my own use.
+
 ## Architecture
 
 The basic idea is each app in the peer-to-peer system will instantiate a DistributedPeer (class
