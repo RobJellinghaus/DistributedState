@@ -17,7 +17,7 @@ the NuGet version of LiteNetLib, and set up a Github workflow to test it.
 ## Architecture
 
 The basic idea is each app in the peer-to-peer system will instantiate a DistributedPeer (class
-I implemented in this library), which represents that app's endpoint in the peer-to-peer systems.
+I implemented in this library), which represents that app's endpoint in the peer-to-peer system.
 DistributedPeers announce their existence periodically via UDP broadcast to a known port, including
 a list of other peers they know about already.
 
