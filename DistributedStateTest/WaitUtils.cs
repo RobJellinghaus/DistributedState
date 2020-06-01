@@ -15,7 +15,7 @@ namespace Distributed.State.Test
     public static class WaitUtils
     {
         public static int SleepMsec = 5;
-        public static int IterationsBeforeFailure = 20;
+        public static int IterationsBeforeFailure = 2000;
 
         /// <summary>
         /// Sleep-retry loop, polling all NetManagers on each iteration, exiting once function becomes true.
