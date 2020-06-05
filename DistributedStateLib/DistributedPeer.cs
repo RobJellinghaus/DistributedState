@@ -497,14 +497,6 @@ namespace Distributed.State
             }
         }
 
-        public void OnCreateReceived(NetPeer creatingPeer, DistributedObject newProxy)
-        {
-            // make sure it's actually a proxy
-            Contract.Requires(!newProxy.IsOwner);
-
-            proxies[creatingPeer].Add(newProxy.Id, newProxy);
-        }
-
         /// <summary>
         /// Poll all network events pending.
         /// </summary>
