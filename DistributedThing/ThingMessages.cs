@@ -28,7 +28,7 @@ namespace Distributed.Thing
 
         public static void Register(DistributedPeer.ProxyCapability proxyCapability)
         {
-            proxyCapability.Peer.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
+            proxyCapability.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
             {
                 var newProxy = new DistributedThing(
                     id: createMessage.Id,

@@ -112,6 +112,11 @@ namespace Distributed.State
             {
                 Peer.AddProxy(netPeer, newProxy);
             }
+            public void SubscribeReusable<TMessage, TUserData>(Action<TMessage, TUserData> action)
+                where TMessage : class, new()
+            {
+                Peer.SubscribeReusable(action);
+            }
         }
 
         #endregion
@@ -221,7 +226,7 @@ namespace Distributed.State
         /// <summary>
         /// Map from object IDs to owner objects. (testing only)
         /// </summary>
-        internal IReadOnlyDictionary<int, DistributedObject> Owners => owners;
+        public IReadOnlyDictionary<int, DistributedObject> Owners => owners;
 
         /// <summary>
         /// Collection of connected peers.
@@ -343,7 +348,7 @@ namespace Distributed.State
         /// <summary>
         /// This is a new proxy being created on this peer, owned by netPeer.
         /// </summary>
-        public void AddProxy(NetPeer netPeer, DistributedObject proxy)
+        private void AddProxy(NetPeer netPeer, DistributedObject proxy)
         {
             Contract.Requires(!proxy.IsOwner);
 
@@ -358,7 +363,7 @@ namespace Distributed.State
         /// adding new DistributedObject implementations requires adding new messages, which requires
         /// subscribing to those new messages.
         /// </remarks>
-        public void SubscribeReusable<TMessage, TUserData>(Action<TMessage, TUserData> action)
+        private void SubscribeReusable<TMessage, TUserData>(Action<TMessage, TUserData> action)
             where TMessage : class, new()
         {
             netPacketProcessor.SubscribeReusable(action);
