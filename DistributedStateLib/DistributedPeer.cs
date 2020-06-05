@@ -183,10 +183,24 @@ namespace Distributed.State
         /// </remarks>
         public int PeerAnnounceResponseCount { get; private set; }
 
+        /// <summary>
+        /// Number of currently connected peers.
+        /// </summary>
         public int PeerCount => netManager.ConnectedPeersCount;
 
+        /// <summary>
+        /// Number of peers for which proxies exist. (testing only)
+        /// </summary>
+        public int ProxyPeerCount => proxies.Count;
+
+        /// <summary>
+        /// Map from object IDs to owner objects.
+        /// </summary>
         public Dictionary<int, DistributedObject> Owners => owners;
 
+        /// <summary>
+        /// Collection of connected peers.
+        /// </summary>
         public IEnumerable<NetPeer> NetPeers => netManager.ConnectedPeerList;
 
         public Dictionary<int, DistributedObject> ProxiesForPeer(NetPeer peer)

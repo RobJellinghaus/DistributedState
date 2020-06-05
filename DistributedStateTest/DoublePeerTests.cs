@@ -144,12 +144,12 @@ namespace Distributed.State.Test
             IPollEvents[] pollables = new IPollEvents[] { peer, peer2 };
 
             // wait until the proxy for the new object makes it to the other peer
-            WaitUtils.WaitUntil(pollables, () => 
+            WaitUtils.WaitUntil(pollables, () =>
                 peer2.NetPeers.Count() == 1
                 && peer2.ProxiesForPeer(peer2.NetPeers.First()).Count == 1);
 
             // wait until the proxy for the new object makes it to the first peer
-            WaitUtils.WaitUntil(pollables, () => 
+            WaitUtils.WaitUntil(pollables, () =>
                 peer.NetPeers.Count() == 1
                 && peer.ProxiesForPeer(peer.NetPeers.First()).Count == 1);
 
@@ -160,6 +160,75 @@ namespace Distributed.State.Test
             DistributedObject peerProxy = peer.ProxiesForPeer(peer.NetPeers.First()).Values.First();
             Assert.AreEqual(2, peerProxy.Id);
             Assert.False(peerProxy.IsOwner);
+        }
+
+        [Test]
+        public void PeerCreateThenDisconnect()
+        {
+            var testWorkQueue = new TestWorkQueue();
+
+            // the first peer under test
+            using DistributedPeer peer = new DistributedPeer(
+                testWorkQueue,
+                DistributedPeer.DefaultListenPort,
+                isListener: true,
+                disconnectTimeout: 10000000); // we want to be able to debug
+
+            // make sure the peers know what to do with ThingMessages
+            ThingMessages.Register(peer);
+
+            // create object
+            var distributedThing = new DistributedThing(
+                1,
+                isOwner: true,
+                localThing: new LocalThing(1));
+
+            peer.AddOwner(distributedThing);
+
+            // construct second peer
+            using (DistributedPeer peer2 = new DistributedPeer(
+                testWorkQueue,
+                DistributedPeer.DefaultListenPort,
+                isListener: false,
+                disconnectTimeout: 10000000))
+            {
+                ThingMessages.Register(peer2);
+
+                // now create an owner object on the other peer
+                var distributedThing2 = new DistributedThing(
+                    2,
+                    isOwner: true,
+                    localThing: new LocalThing(2));
+
+                peer2.AddOwner(distributedThing2);
+
+                // peer could start announcing also, but peer2 isn't listening so it wouldn't be detectable
+                peer2.Announce();
+
+                // the list of all pollable objects, to ensure forward progress
+                IPollEvents[] pollables = new IPollEvents[] { peer, peer2 };
+
+                // wait until the proxy for the new object makes it to the other peer
+                WaitUtils.WaitUntil(pollables, () =>
+                    peer2.NetPeers.Count() == 1
+                    && peer2.ProxiesForPeer(peer2.NetPeers.First()).Count == 1);
+
+                // wait until the proxy for the new object makes it to the first peer
+                WaitUtils.WaitUntil(pollables, () =>
+                    peer.NetPeers.Count() == 1
+                    && peer.ProxiesForPeer(peer.NetPeers.First()).Count == 1);
+
+                DistributedObject peer2Proxy = peer2.ProxiesForPeer(peer2.NetPeers.First()).Values.First();
+                Assert.AreEqual(1, peer2Proxy.Id);
+                Assert.False(peer2Proxy.IsOwner);
+
+                DistributedObject peerProxy = peer.ProxiesForPeer(peer.NetPeers.First()).Values.First();
+                Assert.AreEqual(2, peerProxy.Id);
+                Assert.False(peerProxy.IsOwner);
+            }
+
+            // now after things settle down there should be no proxy
+            WaitUtils.WaitUntil(new[] { peer }, () => peer.PeerCount == 0 && peer.ProxyPeerCount == 0);
         }
     }
 }
