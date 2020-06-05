@@ -15,16 +15,29 @@ namespace Distributed.State
     public abstract class LocalObject : IDistributedInterface
     {
         /// <summary>
+        /// The distributed object that contains this local object.
+        /// </summary>
+        public DistributedObject DistributedObject { get; private set; }
+
+        /// <summary>
         /// ID of this local object; same as its containing distributed object's ID.
         /// </summary>
-        /// <remarks>
-        /// TBD whether it would be better to have the local object just point to the distributed object.
-        /// </remarks>
-        public int Id { get; }
+        public int Id => DistributedObject?.Id ?? 0;
 
-        public LocalObject(int id)
+        public LocalObject()
         {
-            Id = id;
+        }
+
+        /// <summary>
+        /// Connect this local object to its distributed object; may only be called once.
+        /// </summary>
+        /// <param name="distributedObject"></param>
+        internal void Initialize(DistributedObject distributedObject)
+        {
+            Contract.Requires(DistributedObject == null);
+            Contract.Requires(distributedObject != null);
+            
+            DistributedObject = distributedObject;
         }
 
         /// <summary>
@@ -40,7 +53,7 @@ namespace Distributed.State
         /// In practice this is only called on the local object held by an owning object, since only owning
         /// objects need to create proxies.
         /// </remarks>
-        public abstract void SendProxyCreateMessage(DistributedPeer distributedPeer, NetPeer targetPeer);
+        public abstract void SendCreateMessage(DistributedHost distributedPeer, NetPeer targetPeer);
 
         /// <summary>
         /// Delete this object.

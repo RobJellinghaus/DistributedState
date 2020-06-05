@@ -7,11 +7,11 @@ namespace Distributed.Thing
 {
     public class LocalThing : LocalObject
     {
-        public LocalThing(int id) : base(id)
+        public LocalThing()
         {
         }
 
-        public override void SendProxyCreateMessage(DistributedPeer distributedPeer, NetPeer netPeer)
+        public override void SendCreateMessage(DistributedHost distributedPeer, NetPeer netPeer)
         {
             distributedPeer.SendReliableMessage(new ThingMessages.Create(Id), netPeer);
         }

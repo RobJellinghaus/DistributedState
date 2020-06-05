@@ -26,16 +26,31 @@ namespace Distributed.Thing
             { }
         }
 
-        public static void Register(DistributedPeer.ProxyCapability proxyCapability)
+        public class Delete : Distributed.State.DeleteMessage
+        {
+            public Delete() : base(0, false)
+            { }
+
+            public Delete(int id, bool isRequest) : base(id, isRequest)
+            { }
+        }
+
+        public static void Register(DistributedHost.ProxyCapability proxyCapability)
         {
             proxyCapability.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
             {
                 var newProxy = new DistributedThing(
-                    id: createMessage.Id,
-                    isOwner: false,
-                    localThing: new LocalThing(createMessage.Id));
+                    proxyCapability.Host,
+                    netPeer,
+                    createMessage.Id,
+                    localThing: new LocalThing());
 
                 proxyCapability.AddProxy(netPeer, newProxy);
+            });
+
+            proxyCapability.SubscribeReusable((Delete deleteMessage, NetPeer netPeer) =>
+            {
+                proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest);
             });
         }
     }

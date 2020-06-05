@@ -35,6 +35,6 @@ namespace Distributed.State
         /// <summary>
         /// Invoke this CommandMessage, given this Peer it's invoking within, and this object that exists locally.
         /// </summary>
-        public abstract void Invoke(DistributedPeer distributedPeer, DistributedObject distributedObject);
+        public abstract void Invoke(DistributedHost distributedPeer, DistributedObject distributedObject);
     }
 }

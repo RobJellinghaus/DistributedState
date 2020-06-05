@@ -23,7 +23,7 @@ namespace Distributed.State
     /// 
     /// The Peer's first responsibility is discovering other Peers. 
     /// </remarks>
-    public class DistributedPeer : IPollEvents, IDisposable
+    public class DistributedHost : IPollEvents, IDisposable
     {
         private static string RequestKey = "";
 
@@ -35,8 +35,8 @@ namespace Distributed.State
         /// </summary>
         private class Listener : INetEventListener
         {
-            readonly DistributedPeer Peer;
-            internal Listener(DistributedPeer peer)
+            readonly DistributedHost Peer;
+            internal Listener(DistributedHost peer)
             {
                 Peer = peer;
             }
@@ -103,19 +103,23 @@ namespace Distributed.State
         /// </summary>
         public class ProxyCapability
         {
-            public readonly DistributedPeer Peer;
-            internal ProxyCapability(DistributedPeer peer)
+            public readonly DistributedHost Host;
+            internal ProxyCapability(DistributedHost host)
             {
-                Peer = peer;
+                Host = host;
             }
             public void AddProxy(NetPeer netPeer, DistributedObject newProxy)
             {
-                Peer.AddProxy(netPeer, newProxy);
+                Host.AddProxy(netPeer, newProxy);
             }
             public void SubscribeReusable<TMessage, TUserData>(Action<TMessage, TUserData> action)
                 where TMessage : class, new()
             {
-                Peer.SubscribeReusable(action);
+                Host.SubscribeReusable(action);
+            }
+            public void OnDelete(NetPeer netPeer, int id, bool isRequest)
+            {
+                Host.OnDelete(netPeer, id, isRequest);
             }
         }
 
@@ -248,7 +252,7 @@ namespace Distributed.State
 
         #region Construction and disposal
 
-        public DistributedPeer(
+        public DistributedHost(
             IWorkQueue workQueue,
             ushort listenPort,
             bool isListener = true,
@@ -314,7 +318,7 @@ namespace Distributed.State
 
         #region Managing DistributedObjects
 
-        public void RegisterWith(Action<DistributedPeer.ProxyCapability> registrar)
+        public void RegisterWith(Action<DistributedHost.ProxyCapability> registrar)
         {
             registrar(new ProxyCapability(this));
         }
@@ -326,7 +330,7 @@ namespace Distributed.State
         /// This allows external code to create its own owner DistributedObjects, giving them fresh
         /// IDs at construction.
         /// </remarks>
-        public int NextOwnerId()
+        internal int NextOwnerId()
         {
             return ++nextOwnerId;
         }
@@ -334,7 +338,7 @@ namespace Distributed.State
         /// <summary>
         /// This is a new owner DistributedObject entering the system on this peer.
         /// </summary>
-        public void AddOwner(DistributedObject distributedObject)
+        internal void AddOwner(DistributedObject distributedObject)
         {
             owners.Add(distributedObject.Id, distributedObject);
             
@@ -342,6 +346,29 @@ namespace Distributed.State
             foreach (NetPeer netPeer in netManager.ConnectedPeerList)
             {
                 SendProxiesToPeer(netPeer);
+            }
+        }
+
+        /// <summary>
+        /// Delete this owner object from this Peer's tables.
+        /// </summary>
+        internal void Delete(DistributedObject distributedObject, Action<NetPeer, bool> sendDeleteMessage)
+        {
+            Contract.Requires(distributedObject != null);
+            Contract.Requires(sendDeleteMessage != null);
+            Contract.Requires(distributedObject.Host == this);
+
+            if (distributedObject.IsOwner)
+            {
+                owners.Remove(distributedObject.Id);
+                foreach (NetPeer netPeer in NetPeers)
+                {
+                    sendDeleteMessage(netPeer, false);
+                }
+            }
+            else
+            {
+                sendDeleteMessage(distributedObject.OwningPeer, true);
             }
         }
 
@@ -367,6 +394,43 @@ namespace Distributed.State
             where TMessage : class, new()
         {
             netPacketProcessor.SubscribeReusable(action);
+        }
+
+        private void OnDelete(NetPeer netPeer, int id, bool isRequest)
+        {
+            if (isRequest)
+            {
+                // owner id may or may not still exist; it's OK if it doesn't.
+                if (!owners.ContainsKey(id))
+                {
+                    // do nothing; ignore the delete request altogether
+                }
+                else
+                {
+                    // we will accept this request... for testing purposes.
+                    // TBD if this is the right thing in general!
+                    DistributedObject distributedObject = owners[id];
+
+                    // and tell all proxies
+                    foreach (NetPeer proxyPeer in NetPeers)
+                    {
+                        distributedObject.SendDeleteMessageInternal(netPeer, false);
+                    }
+
+                    owners.Remove(id);
+                    distributedObject.Host = null;
+                }
+            }
+            else
+            {
+                // this is an authoritative delete message from the owner.
+                // we expect strong consistency here so the id should still exist.
+                Contract.Requires(proxies[netPeer].ContainsKey(id));
+
+                DistributedObject proxy = proxies[netPeer][id];
+                proxies[netPeer].Remove(id);
+                proxy.Host = null;
+            }
         }
 
         #endregion
@@ -438,7 +502,7 @@ namespace Distributed.State
         {
             foreach (KeyValuePair<int, DistributedObject> entry in owners)
             {
-                entry.Value.LocalObject.SendProxyCreateMessage(this, netPeer);
+                entry.Value.LocalObject.SendCreateMessage(this, netPeer);
             }
         }
 

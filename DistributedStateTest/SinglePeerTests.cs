@@ -9,18 +9,18 @@ namespace Distributed.State.Test
     public class SinglePeerTests
     {
         [Test]
-        public void ConstructPeer()
+        public void ConstructHost()
         {
             var testWorkQueue = new TestWorkQueue();
-            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort);
+            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort);
 
-            Assert.IsNotNull(peer);
+            Assert.IsNotNull(host);
 
             // Should be no work after construction.
             Assert.AreEqual(0, testWorkQueue.Count);
 
             // Start announcing.
-            peer.Announce();
+            host.Announce();
 
             // should have sent one Announce message, and queued the action to send the next
             Assert.AreEqual(1, testWorkQueue.Count);
@@ -34,21 +34,21 @@ namespace Distributed.State.Test
             var testBroadcastListener = new TestBroadcastNetEventListener();
             var testNetManager = new TestNetManager(new NetManager(testBroadcastListener));
             testNetManager.NetManager.BroadcastReceiveEnabled = true;
-            testNetManager.NetManager.Start(DistributedPeer.DefaultListenPort);
+            testNetManager.NetManager.Start(DistributedHost.DefaultListenPort);
 
-            // the peer under test
-            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: false);
+            // the host under test
+            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: false);
 
             // start announcing
-            peer.Announce();
+            host.Announce();
 
             // the list of all pollable objects, to ensure forward progress
-            IPollEvents[] pollables = new IPollEvents[] { peer, testNetManager };
+            IPollEvents[] pollables = new IPollEvents[] { host, testNetManager };
 
             // should have received Announce message
             WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
             Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out object announceMessage));
-            ValidateAnnounceMessage(announceMessage, peer);
+            ValidateAnnounceMessage(announceMessage, host);
 
             // now execute pending work
             testWorkQueue.PollEvents();
@@ -59,34 +59,34 @@ namespace Distributed.State.Test
             // wait to receive second Announce
             WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
             Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
-            ValidateAnnounceMessage(announceMessage, peer);
+            ValidateAnnounceMessage(announceMessage, host);
 
-            static void ValidateAnnounceMessage(object possibleMessage, DistributedPeer peer)
+            static void ValidateAnnounceMessage(object possibleMessage, DistributedHost host)
             {
                 AnnounceMessage announceMessage = possibleMessage as AnnounceMessage;
                 Assert.IsNotNull(announceMessage);
-                Assert.AreEqual(peer.SocketAddress, announceMessage.AnnouncerSocketAddress.SocketAddress);
+                Assert.AreEqual(host.SocketAddress, announceMessage.AnnouncerSocketAddress.SocketAddress);
                 Assert.AreEqual(0, announceMessage.KnownPeers.Length);
             }
         }
 
 
         [Test]
-        public void PeerListenForAnnounce()
+        public void HostListenForAnnounce()
         {
             var testWorkQueue = new TestWorkQueue();
 
-            // the peer under test
-            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: true);
+            // the host under test
+            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
 
             // start announcing
-            peer.Announce();
+            host.Announce();
 
             // the list of all pollable objects, to ensure forward progress
-            IPollEvents[] pollables = new IPollEvents[] { peer };
+            IPollEvents[] pollables = new IPollEvents[] { host };
 
             // should have received Announce message
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 1);
+            WaitUtils.WaitUntil(pollables, () => host.PeerAnnounceCount == 1);
 
             // now execute pending work
             testWorkQueue.PollEvents();
@@ -95,27 +95,24 @@ namespace Distributed.State.Test
             Assert.AreEqual(1, testWorkQueue.Count);
 
             // wait to receive second Announce
-            WaitUtils.WaitUntil(pollables, () => peer.PeerAnnounceCount == 2);
+            WaitUtils.WaitUntil(pollables, () => host.PeerAnnounceCount == 2);
         }
 
         [Test]
-        public void PeerCreateObjects()
+        public void HostCreateObjects()
         {
             var testWorkQueue = new TestWorkQueue();
 
-            // the first peer under test
-            using DistributedPeer peer = new DistributedPeer(testWorkQueue, DistributedPeer.DefaultListenPort, isListener: true);
+            // the first host under test
+            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
 
             // create a Distributed.Thing
-            var distributedThing = new DistributedThing(
-                1,
-                isOwner: true,
-                localThing: new LocalThing(1));
+            var distributedThing = new DistributedThing(host, new LocalThing());
 
-            peer.AddOwner(distributedThing);
+            host.AddOwner(distributedThing);
 
-            Assert.AreEqual(1, peer.Owners.Count);
-            Assert.True(peer.Owners.Values.First() == distributedThing);
+            Assert.AreEqual(1, host.Owners.Count);
+            Assert.True(host.Owners.Values.First() == distributedThing);
         }
     }
 }

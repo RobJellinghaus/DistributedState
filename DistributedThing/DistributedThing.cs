@@ -1,18 +1,20 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 using Distributed.State;
+using LiteNetLib;
 using System;
 
 namespace Distributed.Thing
 {
     public class DistributedThing : DistributedObject<LocalThing>, IThing
     {
-        public DistributedThing(int id, bool isOwner, LocalThing localThing)
-            : base(id, isOwner, localThing)
+        public DistributedThing(DistributedHost peer, LocalThing localThing)
+            : base(peer, localThing)
         {
-            // ensure consistent IDs
-            Contract.Requires(id == localThing.Id);
+        }
 
-            // TODO: create proxies if owner
+        public DistributedThing(DistributedHost peer, NetPeer owningPeer, int id, LocalThing localThing)
+            : base(peer, owningPeer, id, localThing)
+        {
         }
 
         public void Bleat()
@@ -20,9 +22,9 @@ namespace Distributed.Thing
             throw new NotImplementedException();
         }
 
-        public void Delete()
+        protected override void SendDeleteMessage(NetPeer netPeer, bool isRequest)
         {
-            throw new NotImplementedException();
+            Host.SendReliableMessage(new ThingMessages.Delete(Id, isRequest), netPeer);
         }
     }
 }

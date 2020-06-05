@@ -1,5 +1,7 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
+using LiteNetLib;
+
 namespace Distributed.State
 {
     /// <summary>
@@ -28,8 +30,18 @@ namespace Distributed.State
     /// 3) Proxies whose methods are invoked do not update any local state, but only relay command requests to
     ///    the owner; the owner is always authoritative about state.
     /// </remarks>
-    public class DistributedObject
+    public abstract class DistributedObject : IDistributedInterface
     {
+        /// <summary>
+        /// The peer that contains this object.
+        /// </summary>
+        public DistributedHost Host { get; internal set; }
+
+        /// <summary>
+        /// The NetPeer which owns this proxy, if this is a proxy.
+        /// </summary>
+        public NetPeer OwningPeer { get; private set; }
+
         /// <summary>
         /// Is this object the original, owner instance?
         /// </summary>
@@ -49,18 +61,84 @@ namespace Distributed.State
         /// </summary>
         public readonly LocalObject LocalObject;
 
-        protected DistributedObject(int id, bool isOwner, LocalObject localObject)
+        /// <summary>
+        /// Create an owner DistributedObject.
+        /// </summary>
+        protected DistributedObject(DistributedHost host, LocalObject localObject)
         {
-            Id = id;
-            IsOwner = isOwner;
+            Contract.Requires(host != null);
+            Contract.Requires(localObject != null);
+
+            Host = host;
+            Id = host.NextOwnerId();
+            IsOwner = true;
             LocalObject = localObject;
+            // and connect the local object to us
+            LocalObject.Initialize(this);
         }
+
+        /// <summary>
+        /// Create a proxy DistributedObject.
+        /// </summary>
+        protected DistributedObject(DistributedHost host, NetPeer netPeer, int id, LocalObject localObject)
+        {
+            Contract.Requires(host != null);
+            Contract.Requires(netPeer != null);
+            Contract.Requires(id > 0);
+            Contract.Requires(localObject != null);
+
+            Host = host;
+            OwningPeer = netPeer;
+            Id = id;
+            IsOwner = false;
+            LocalObject = localObject;
+            LocalObject.Initialize(this);
+        }
+
+        /// <summary>
+        /// Detach this object from its Host; this occurs when the owner or proxy is deleted (or the proxy gets disconnected
+        /// from the host).
+        /// </summary>
+        internal void Detach()
+        {
+            Contract.Requires(Host != null);
+
+            Host = null;
+        }
+
+        /// <summary>
+        /// Delete this DistributedObject.
+        /// </summary>
+        /// <remarks>
+        /// If called on the owner object, this will delete it (and all its proxies).  If called on a
+        /// proxy object, this will send a deletion request to the owner.
+        /// </remarks>
+        public void Delete()
+        {
+            Contract.Requires(Host != null);
+
+            Host.Delete(this, SendDeleteMessage);
+            
+            // once we are deleted we lose our connection to our peer
+            Host = null;
+        }
+
+        internal void SendDeleteMessageInternal(NetPeer netPeer, bool isRequest)
+        {
+            SendDeleteMessage(netPeer, isRequest);
+        }
+
+        /// <summary>
+        /// Construct the appropriate kind of DeleteMessage for this type of object.
+        /// </summary>
+        /// <returns></returns>
+        protected abstract void SendDeleteMessage(NetPeer netPeer, bool isRequest);
     }
 
     /// <summary>
     /// More strongly typed base class, for convenience of derived classes.
     /// </summary>
-    public class DistributedObject<TLocalObject> : DistributedObject
+    public abstract class DistributedObject<TLocalObject> : DistributedObject
         where TLocalObject : LocalObject
     {
         /// <summary>
@@ -68,8 +146,14 @@ namespace Distributed.State
         /// </summary>
         public readonly TLocalObject TypedLocalObject;
 
-        protected DistributedObject(int id, bool isOwner, TLocalObject localObject)
-            : base(id, isOwner, localObject)
+        protected DistributedObject(DistributedHost peer, TLocalObject localObject)
+            : base(peer, localObject)
+        {
+            TypedLocalObject = localObject;
+        }
+
+        protected DistributedObject(DistributedHost peer, NetPeer owningPeer, int id, TLocalObject localObject)
+            : base(peer, owningPeer, id, localObject)
         {
             TypedLocalObject = localObject;
         }
