@@ -26,16 +26,16 @@ namespace Distributed.Thing
             { }
         }
 
-        public static void Register(DistributedPeer distributedPeer)
+        public static void Register(DistributedPeer.ProxyCapability proxyCapability)
         {
-            distributedPeer.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
+            proxyCapability.Peer.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
             {
                 var newProxy = new DistributedThing(
                     id: createMessage.Id,
                     isOwner: false,
                     localThing: new LocalThing(createMessage.Id));
 
-                distributedPeer.AddProxy(netPeer, newProxy);
+                proxyCapability.AddProxy(netPeer, newProxy);
             });
         }
     }

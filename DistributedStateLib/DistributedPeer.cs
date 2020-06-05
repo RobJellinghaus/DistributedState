@@ -96,6 +96,26 @@ namespace Distributed.State
 
         #endregion
 
+        #region Capability for adding proxies
+
+        /// <summary>
+        /// Capability class that allows callbacks to register proxies, but no one else.
+        /// </summary>
+        public class ProxyCapability
+        {
+            public readonly DistributedPeer Peer;
+            internal ProxyCapability(DistributedPeer peer)
+            {
+                Peer = peer;
+            }
+            public void AddProxy(NetPeer netPeer, DistributedObject newProxy)
+            {
+                Peer.AddProxy(netPeer, newProxy);
+            }
+        }
+
+        #endregion
+
         #region Fields and properties
 
         /// <summary>
@@ -289,6 +309,10 @@ namespace Distributed.State
 
         #region Managing DistributedObjects
 
+        public void RegisterWith(Action<DistributedPeer.ProxyCapability> registrar)
+        {
+            registrar(new ProxyCapability(this));
+        }
 
         /// <summary>
         /// Get the next owner ID for this DistributedPeer.

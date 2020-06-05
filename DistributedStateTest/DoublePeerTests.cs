@@ -54,8 +54,8 @@ namespace Distributed.State.Test
                 disconnectTimeout: 10000000);
 
             // make sure the peers know what to do with ThingMessages
-            ThingMessages.Register(peer);
-            ThingMessages.Register(peer2);
+            peer.RegisterWith(ThingMessages.Register);
+            peer2.RegisterWith(ThingMessages.Register);
 
             // peer could start announcing also, but peer2 isn't listening so it wouldn't be detectable
             peer2.Announce();
@@ -110,7 +110,7 @@ namespace Distributed.State.Test
                 disconnectTimeout: 10000000); // we want to be able to debug
 
             // make sure the peers know what to do with ThingMessages
-            ThingMessages.Register(peer);
+            peer.RegisterWith(ThingMessages.Register);
 
             // create object
             var distributedThing = new DistributedThing(
@@ -127,7 +127,7 @@ namespace Distributed.State.Test
                 isListener: false,
                 disconnectTimeout: 10000000);
 
-            ThingMessages.Register(peer2);
+            peer2.RegisterWith(ThingMessages.Register);
 
             // now create an owner object on the other peer
             var distributedThing2 = new DistributedThing(
@@ -175,7 +175,7 @@ namespace Distributed.State.Test
                 disconnectTimeout: 10000000); // we want to be able to debug
 
             // make sure the peers know what to do with ThingMessages
-            ThingMessages.Register(peer);
+            peer.RegisterWith(ThingMessages.Register);
 
             // create object
             var distributedThing = new DistributedThing(
@@ -192,7 +192,7 @@ namespace Distributed.State.Test
                 isListener: false,
                 disconnectTimeout: 10000000))
             {
-                ThingMessages.Register(peer2);
+                peer2.RegisterWith(ThingMessages.Register);
 
                 // now create an owner object on the other peer
                 var distributedThing2 = new DistributedThing(
