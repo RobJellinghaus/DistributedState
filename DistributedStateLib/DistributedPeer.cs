@@ -6,6 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
+
+// Give test suite (only) visibility into internal properties of this assembly, 
+// and especially this DistributedPeer type.
+[assembly: InternalsVisibleTo("DistributedStateTest")]
 
 namespace Distributed.State
 {
@@ -126,17 +131,17 @@ namespace Distributed.State
         /// <summary>
         /// The LiteNetLib instance for handling broadcast traffic; has no peers.
         /// </summary>
-        private NetManager netManager;
+        private readonly NetManager netManager;
 
         /// <summary>
         /// Reusable NetDataWriter instance; reset before use.
         /// </summary>
-        private NetDataWriter netDataWriter;
+        private readonly NetDataWriter netDataWriter;
 
         /// <summary>
         /// Packet processor that handles type mapping on the wire.
         /// </summary>
-        private NetPacketProcessor netPacketProcessor;
+        private readonly NetPacketProcessor netPacketProcessor;
 
         /// <summary>
         /// The IWorkQueue used for scheduling future work.
@@ -150,7 +155,7 @@ namespace Distributed.State
         /// Note that these IDs are unique only within this Peer; each Peer defines its own ID space
         /// for its owned objects.
         /// </remarks>
-        private Dictionary<int, DistributedObject> owners = new Dictionary<int, DistributedObject>();
+        private readonly Dictionary<int, DistributedObject> owners = new Dictionary<int, DistributedObject>();
 
         /// <summary>
         /// The next id to assign to a new owning object.
@@ -164,7 +169,7 @@ namespace Distributed.State
         /// Note that each ID is unique only within that peer's collection; each peer defines its
         /// own proxies' ID space.
         /// </remarks>
-        private Dictionary<NetPeer, Dictionary<int, DistributedObject>> proxies
+        private readonly Dictionary<NetPeer, Dictionary<int, DistributedObject>> proxies
             = new Dictionary<NetPeer, Dictionary<int, DistributedObject>>();
 
         /// <summary>
@@ -191,19 +196,22 @@ namespace Distributed.State
         /// <summary>
         /// Number of peers for which proxies exist. (testing only)
         /// </summary>
-        public int ProxyPeerCount => proxies.Count;
+        internal int ProxyPeerCount => proxies.Count;
 
         /// <summary>
-        /// Map from object IDs to owner objects.
+        /// Map from object IDs to owner objects. (testing only)
         /// </summary>
-        public Dictionary<int, DistributedObject> Owners => owners;
+        internal IReadOnlyDictionary<int, DistributedObject> Owners => owners;
 
         /// <summary>
         /// Collection of connected peers.
         /// </summary>
         public IEnumerable<NetPeer> NetPeers => netManager.ConnectedPeerList;
 
-        public Dictionary<int, DistributedObject> ProxiesForPeer(NetPeer peer)
+        /// <summary>
+        /// Get the proxies that are owned by this peer.
+        /// </summary>
+        public IReadOnlyDictionary<int, DistributedObject> ProxiesForPeer(NetPeer peer)
         {
             Contract.Requires(netManager.ConnectedPeerList.Contains(peer));
             Contract.Requires(proxies.ContainsKey(peer));
