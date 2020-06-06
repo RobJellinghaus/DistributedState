@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Distributed.State.Test
 {
-    public class SinglePeerTests
+    public class SingleHostTests
     {
         [Test]
         public void ConstructHost()

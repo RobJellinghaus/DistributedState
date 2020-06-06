@@ -276,9 +276,52 @@ namespace Distributed.State.Test
 
             // wait until the messages flow around, and make sure there is only one proxy with id 2
             WaitUtils.WaitUntil(
-                new[] { host, host2 }, 
+                new[] { host, host2 },
                 () => host2.ProxiesForPeer(host2.NetPeers.First()).Count == 1
                     && host2.ProxiesForPeer(host2.NetPeers.First()).ContainsKey(2));
+        }
+
+        [Test]
+        public void HostCreateAndDeleteProxyAfterConnection()
+        {
+            var testWorkQueue = new TestWorkQueue();
+
+            // the first host under test
+            using DistributedHost host = new DistributedHost(
+                testWorkQueue,
+                DistributedHost.DefaultListenPort,
+                isListener: true,
+                disconnectTimeout: 10000000); // we want to be able to debug
+
+            // construct second host
+            using DistributedHost host2 = new DistributedHost(
+                testWorkQueue,
+                DistributedHost.DefaultListenPort,
+                isListener: false,
+                disconnectTimeout: 10000000);
+
+            // make sure the hosts know what to do with ThingMessages
+            host.RegisterWith(ThingMessages.Register);
+            host2.RegisterWith(ThingMessages.Register);
+
+            // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
+            host2.Announce();
+
+            // create object
+            var distributedThing = new DistributedThing(host, new LocalThing());
+
+            // wait until the proxy for the new object makes it to the other host
+            WaitUtils.WaitUntil(
+                new[] { host, host2 },
+                () => host2.NetPeers.Count() == 1 && host2.ProxiesForPeer(host2.NetPeers.First()).Count == 1);
+
+            // now delete the proxy
+            host2.ProxiesForPeer(host2.NetPeers.First())[1].Delete();
+
+            // wait until the messages flow around, and make sure there are now no proxies and no owners
+            WaitUtils.WaitUntil(
+                new[] { host, host2 },
+                () => host2.ProxiesForPeer(host2.NetPeers.First()).Count == 0 && host.Owners.Count == 0);
         }
     }
 }
