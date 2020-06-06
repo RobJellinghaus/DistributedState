@@ -75,6 +75,9 @@ namespace Distributed.State
             LocalObject = localObject;
             // and connect the local object to us
             LocalObject.Initialize(this);
+
+            // and add us to host
+            Host.AddOwner(this);
         }
 
         /// <summary>
@@ -123,16 +126,36 @@ namespace Distributed.State
             Host = null;
         }
 
+
+        /// <summary>
+        /// Get an action that will send the right CreateMessage to create a proxy for this object.
+        /// </summary>
+        /// <remarks>
+        /// The LiteNetLib serialization library does not support polymorphism except for toplevel packets
+        /// being sent (e.g. the only dynamic type mapping is in the NetPacketProcessor which maps packets
+        /// to subscription callbacks).  So we can't make a generic CreateMessage with polymorphic payload.
+        /// Instead, when it's time to create a proxy, we get an Action which will send the right CreateMessage
+        /// to create the right proxy.
+        /// 
+        /// In practice this is only called on the local object held by an owning object, since only owning
+        /// objects need to create proxies.
+        /// </remarks>
+        protected abstract void SendCreateMessage(NetPeer netPeer);
+
+        internal void SendCreateMessageInternal(NetPeer netPeer)
+        {
+            SendCreateMessage(netPeer);
+        }
+
+        /// <summary>
+        /// Send the appropriate kind of DeleteMessage for this type of object.
+        /// </summary>
+        protected abstract void SendDeleteMessage(NetPeer netPeer, bool isRequest);
+
         internal void SendDeleteMessageInternal(NetPeer netPeer, bool isRequest)
         {
             SendDeleteMessage(netPeer, isRequest);
         }
-
-        /// <summary>
-        /// Construct the appropriate kind of DeleteMessage for this type of object.
-        /// </summary>
-        /// <returns></returns>
-        protected abstract void SendDeleteMessage(NetPeer netPeer, bool isRequest);
     }
 
     /// <summary>
@@ -157,5 +180,8 @@ namespace Distributed.State
         {
             TypedLocalObject = localObject;
         }
+
+        protected abstract override void SendCreateMessage(NetPeer netPeer);
+        protected abstract override void SendDeleteMessage(NetPeer netPeer, bool isRequest);
     }
 }

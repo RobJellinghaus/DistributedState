@@ -69,8 +69,6 @@ namespace Distributed.State.Test
             // create object
             var distributedThing = new DistributedThing(host, new LocalThing());
 
-            host.AddOwner(distributedThing);
-
             // wait until the proxy for the new object makes it to the other host
             WaitUtils.WaitUntil(pollables, () => host2.ProxiesForPeer(host2.NetPeers.First()).Count == 1);
 
@@ -79,15 +77,13 @@ namespace Distributed.State.Test
             Assert.False(host2Proxy.IsOwner);
 
             // now create an owner object on the other host
-            var distributedThing2 = new DistributedThing(host, new LocalThing());
-
-            host2.AddOwner(distributedThing2);
+            var distributedThing2 = new DistributedThing(host2, new LocalThing());
 
             // wait until the proxy for the new object makes it to the first host
             WaitUtils.WaitUntil(pollables, () => host.ProxiesForPeer(host.NetPeers.First()).Count == 1);
 
             DistributedObject hostProxy = host.ProxiesForPeer(host.NetPeers.First()).Values.First();
-            Assert.AreEqual(2, hostProxy.Id);
+            Assert.AreEqual(1, hostProxy.Id);
             Assert.False(hostProxy.IsOwner);
         }
 
@@ -109,8 +105,6 @@ namespace Distributed.State.Test
             // create object
             var distributedThing = new DistributedThing(host, new LocalThing());
 
-            host.AddOwner(distributedThing);
-
             // construct second host
             using DistributedHost host2 = new DistributedHost(
                 testWorkQueue,
@@ -124,23 +118,18 @@ namespace Distributed.State.Test
             host2.NextOwnerId();
 
             // now create an owner object on the other host
-            var distributedThing2 = new DistributedThing(host, new LocalThing());
-
-            host2.AddOwner(distributedThing2);
+            var distributedThing2 = new DistributedThing(host2, new LocalThing());
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
 
-            // the list of all pollable objects, to ensure forward progress
-            IPollEvents[] pollables = new IPollEvents[] { host, host2 };
-
             // wait until the proxy for the new object makes it to the other host
-            WaitUtils.WaitUntil(pollables, () =>
+            WaitUtils.WaitUntil(new[] { host, host2 }, () =>
                 host2.NetPeers.Count() == 1
                 && host2.ProxiesForPeer(host2.NetPeers.First()).Count == 1);
 
             // wait until the proxy for the new object makes it to the first host
-            WaitUtils.WaitUntil(pollables, () =>
+            WaitUtils.WaitUntil(new[] { host, host2 }, () =>
                 host.NetPeers.Count() == 1
                 && host.ProxiesForPeer(host.NetPeers.First()).Count == 1);
 
@@ -171,8 +160,6 @@ namespace Distributed.State.Test
             // create object
             var distributedThing = new DistributedThing(host, new LocalThing());
 
-            host.AddOwner(distributedThing);
-
             // construct second host
             using (DistributedHost host2 = new DistributedHost(
                 testWorkQueue,
@@ -186,23 +173,18 @@ namespace Distributed.State.Test
                 host2.NextOwnerId();
 
                 // now create an owner object on the other host
-                var distributedThing2 = new DistributedThing(host, new LocalThing());
-
-                host2.AddOwner(distributedThing2);
+                var distributedThing2 = new DistributedThing(host2, new LocalThing());
 
                 // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
                 host2.Announce();
 
-                // the list of all pollable objects, to ensure forward progress
-                IPollEvents[] pollables = new IPollEvents[] { host, host2 };
-
                 // wait until the proxy for the new object makes it to the other host
-                WaitUtils.WaitUntil(pollables, () =>
+                WaitUtils.WaitUntil(new[] { host, host2 }, () =>
                     host2.NetPeers.Count() == 1
                     && host2.ProxiesForPeer(host2.NetPeers.First()).Count == 1);
 
                 // wait until the proxy for the new object makes it to the first host
-                WaitUtils.WaitUntil(pollables, () =>
+                WaitUtils.WaitUntil(new[] { host, host2 }, () =>
                     host.NetPeers.Count() == 1
                     && host.ProxiesForPeer(host.NetPeers.First()).Count == 1);
 

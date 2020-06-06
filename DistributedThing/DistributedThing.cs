@@ -22,6 +22,11 @@ namespace Distributed.Thing
             throw new NotImplementedException();
         }
 
+        protected override void SendCreateMessage(NetPeer netPeer)
+        {
+            Host.SendReliableMessage(new ThingMessages.Create(Id), netPeer);
+        }
+
         protected override void SendDeleteMessage(NetPeer netPeer, bool isRequest)
         {
             Host.SendReliableMessage(new ThingMessages.Delete(Id, isRequest), netPeer);

@@ -345,7 +345,7 @@ namespace Distributed.State
             // and tell all the peers
             foreach (NetPeer netPeer in netManager.ConnectedPeerList)
             {
-                SendProxiesToPeer(netPeer);
+                distributedObject.SendCreateMessageInternal(netPeer);
             }
         }
 
@@ -502,7 +502,7 @@ namespace Distributed.State
         {
             foreach (KeyValuePair<int, DistributedObject> entry in owners)
             {
-                entry.Value.LocalObject.SendCreateMessage(this, netPeer);
+                entry.Value.SendCreateMessageInternal(netPeer);
             }
         }
 

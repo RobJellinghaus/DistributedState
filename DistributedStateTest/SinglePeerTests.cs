@@ -99,7 +99,7 @@ namespace Distributed.State.Test
         }
 
         [Test]
-        public void HostCreateObjects()
+        public void HostCreateObject()
         {
             var testWorkQueue = new TestWorkQueue();
 
@@ -109,10 +109,25 @@ namespace Distributed.State.Test
             // create a Distributed.Thing
             var distributedThing = new DistributedThing(host, new LocalThing());
 
-            host.AddOwner(distributedThing);
-
             Assert.AreEqual(1, host.Owners.Count);
             Assert.True(host.Owners.Values.First() == distributedThing);
+        }
+
+
+        [Test]
+        public void HostCreateThenDeleteObject()
+        {
+            var testWorkQueue = new TestWorkQueue();
+
+            // the first host under test
+            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
+
+            // create a Distributed.Thing
+            var distributedThing = new DistributedThing(host, new LocalThing());
+
+            distributedThing.Delete();
+
+            Assert.AreEqual(0, host.Owners.Count);
         }
     }
 }

@@ -41,21 +41,6 @@ namespace Distributed.State
         }
 
         /// <summary>
-        /// Get an action that will send the right CreateMessage to create a proxy for this object.
-        /// </summary>
-        /// <remarks>
-        /// The LiteNetLib serialization library does not support polymorphism except for toplevel packets
-        /// being sent (e.g. the only dynamic type mapping is in the NetPacketProcessor which maps packets
-        /// to subscription callbacks).  So we can't make a generic CreateMessage with polymorphic payload.
-        /// Instead, when it's time to create a proxy, we get an Action which will send the right CreateMessage
-        /// to create the right proxy.
-        /// 
-        /// In practice this is only called on the local object held by an owning object, since only owning
-        /// objects need to create proxies.
-        /// </remarks>
-        public abstract void SendCreateMessage(DistributedHost distributedPeer, NetPeer targetPeer);
-
-        /// <summary>
         /// Delete this object.
         /// </summary>
         /// <remarks>

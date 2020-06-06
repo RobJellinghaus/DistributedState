@@ -11,11 +11,6 @@ namespace Distributed.Thing
         {
         }
 
-        public override void SendCreateMessage(DistributedHost distributedPeer, NetPeer netPeer)
-        {
-            distributedPeer.SendReliableMessage(new ThingMessages.Create(Id), netPeer);
-        }
-
         public override void Delete()
         {
             // do nothing... accept the void
