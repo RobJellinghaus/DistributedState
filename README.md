@@ -6,13 +6,8 @@ a distributed LAN system I'm working on that wants both reliable and unreliable 
 networking, locally only.
 
 At the moment (as of early June 2020) the library is under very active development and is by no
-means feature complete, even for my own use.
-
-The library at this moment is set up to build with a local clone of LiteNetLib in a sibling 
-directory, since I'm hacking LiteNetLib to add various debugging code.  If you clone this, change
-the projects to depend on the latest NuGet release of LiteNetLib instead.  (Or clone LiteNetLib
-and put the repository adjacent to this one.)  Once the code stabilizes, I will revert to using
-the NuGet version of LiteNetLib, and set up a Github workflow to test it.
+means feature complete, even for my own use.  It does at least have a GitHub workflow to make sure
+the tests pass!
 
 ## Architecture
 
