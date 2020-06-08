@@ -33,12 +33,24 @@ namespace Distributed.State.Test
             Assert.AreEqual(1, host2.PeerAnnounceResponseCount);
         }
 
-        static IReadOnlyDictionary<int, DistributedObject> ProxiesForFirstPeer(DistributedHost host)
+
+        private static DistributedHost CreateHost(TestWorkQueue testWorkQueue, bool isListener)
+        {
+            var host = new DistributedHost(
+                testWorkQueue,
+                DistributedHost.DefaultListenPort,
+                isListener: isListener,
+                disconnectTimeout: 10000000);
+            host.RegisterWith(ThingMessages.Register);
+            return host;
+        }
+
+        private static IReadOnlyDictionary<int, DistributedObject> ProxiesForFirstPeer(DistributedHost host)
         {
             return host.ProxiesForPeer(host.NetPeers.First());
         }
 
-        static LocalThing FirstProxyLocalThing(DistributedHost host)
+        private static LocalThing FirstProxyLocalThing(DistributedHost host)
         {
             return (LocalThing)ProxiesForFirstPeer(host).First().Value.LocalObject;
         }
@@ -49,22 +61,10 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
@@ -99,26 +99,13 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // create object
             var distributedThing = new DistributedThing(host, new LocalThing());
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // consume one owner ID so second object has ID 2 instead of (matching first object) ID 1
             host2.NextOwnerId();
@@ -151,27 +138,14 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // create object
             var distributedThing = new DistributedThing(host, new LocalThing());
 
             // construct second host
-            using (DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000))
+            using (DistributedHost host2 = CreateHost(testWorkQueue, false))
             {
-                host2.RegisterWith(ThingMessages.Register);
-
                 // consume one owner ID so second object has ID 2 instead of (matching first object) ID 1
                 host2.NextOwnerId();
 
@@ -207,22 +181,10 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
@@ -250,22 +212,10 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
@@ -297,22 +247,10 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
@@ -340,22 +278,10 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
@@ -391,22 +317,10 @@ namespace Distributed.State.Test
             var testWorkQueue = new TestWorkQueue();
 
             // the first host under test
-            using DistributedHost host = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: true,
-                disconnectTimeout: 10000000); // we want to be able to debug
+            using DistributedHost host = CreateHost(testWorkQueue, true);
 
             // construct second host
-            using DistributedHost host2 = new DistributedHost(
-                testWorkQueue,
-                DistributedHost.DefaultListenPort,
-                isListener: false,
-                disconnectTimeout: 10000000);
-
-            // make sure the hosts know what to do with ThingMessages
-            host.RegisterWith(ThingMessages.Register);
-            host2.RegisterWith(ThingMessages.Register);
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
 
             // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
             host2.Announce();
@@ -420,13 +334,60 @@ namespace Distributed.State.Test
             // wait until the proxy for the new object makes it to the other host
             WaitUtils.WaitUntil(new[] { host, host2 }, () => ProxiesForFirstPeer(host2).Count == 1);
 
+            // change the state of the owner
             distributedThing.Enqueue(new[] { 1, 2 });
 
+            // verify the proxy gets updated
             WaitUtils.WaitUntil(
                 new[] { host, host2 },
                 () => FirstProxyLocalThing(host2).LocalValues.Count() == 2);
 
             Assert.IsTrue(Enumerable.SequenceEqual(new[] { 1, 2 }, FirstProxyLocalThing(host2).LocalValues.ToList()));
+        }
+
+        [Test]
+        public void HostCreateThenProxyUpdate()
+        {
+            var testWorkQueue = new TestWorkQueue();
+
+            // the first host under test
+            using DistributedHost host = CreateHost(testWorkQueue, true);
+
+            // construct second host
+            using DistributedHost host2 = CreateHost(testWorkQueue, false);
+
+            // host could start announcing also, but host2 isn't listening so it wouldn't be detectable
+            host2.Announce();
+
+            // should generate announce response and then connection
+            WaitUtils.WaitUntil(new[] { host, host2 }, () => host.PeerCount == 1 && host2.PeerCount == 1);
+
+            // create object
+            var distributedThing = new DistributedThing(host, new LocalThing());
+
+            // wait until the proxy for the new object makes it to the other host
+            WaitUtils.WaitUntil(new[] { host, host2 }, () => ProxiesForFirstPeer(host2).Count == 1);
+
+            // this time update the state of the *proxy* -- or more precisely, send a request to the proxy
+            // to update the owner's state (which will, in turn, update the proxy's state)
+            DistributedThing host2DistributedThing = (DistributedThing)ProxiesForFirstPeer(host2).First().Value;
+            host2DistributedThing.Enqueue(new[] { 1, 2 });
+
+            // make sure we didn't actually update the local thing yet; only messages from the owner can do that
+            Assert.AreEqual(0, host2DistributedThing.TypedLocalObject.LocalValues.Count());
+
+            // wait until owner gets the proxy's memo
+            WaitUtils.WaitUntil(
+                new[] { host, host2 },
+                () => distributedThing.TypedLocalObject.LocalValues.Count() == 2);
+
+            // and now wait until proxy gets the owner's memo
+            WaitUtils.WaitUntil(
+                new[] { host, host2 },
+                () => host2DistributedThing.TypedLocalObject.LocalValues.Count() == 2);
+
+            Assert.IsTrue(Enumerable.SequenceEqual(new[] { 1, 2 }, distributedThing.TypedLocalObject.LocalValues.ToList()));
+            Assert.IsTrue(Enumerable.SequenceEqual(new[] { 1, 2 }, host2DistributedThing.TypedLocalObject.LocalValues.ToList()));
         }
     }
 }
