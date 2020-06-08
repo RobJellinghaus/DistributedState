@@ -10,7 +10,9 @@ namespace Distributed.Thing
     /// Distributed implementation of an IThing.
     /// </summary>
     /// <remarks>
-    /// A DistributedObject implementation handles method calls by either routing them to the owner, 
+    /// A DistributedObject implementation handles method calls by either routing them to the owner (if this
+    /// is a proxy), or by sending updates to all proxies and then updating the local object (if this is the
+    /// owner).  The owner's messages directly update the local objects of all proxies.
     /// </remarks>
     public class DistributedThing : DistributedObject<LocalThing>, IThing
     {

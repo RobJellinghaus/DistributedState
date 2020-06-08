@@ -76,9 +76,6 @@ namespace Distributed.State
             LocalObject = localObject;
             // and connect the local object to us
             LocalObject.Initialize(this);
-
-            // and add us to host
-            Host.AddOwner(this);
         }
 
         /// <summary>
@@ -173,6 +170,9 @@ namespace Distributed.State
             : base(peer, localObject)
         {
             TypedLocalObject = localObject;
+
+            // and NOW add us as an owner object. Otherwise TypedLocalObject is not initialized yet.
+            Host.AddOwner(this);
         }
 
         protected DistributedObject(DistributedHost peer, NetPeer owningPeer, int id, TLocalObject localObject)

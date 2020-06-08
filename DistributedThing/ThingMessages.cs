@@ -59,7 +59,7 @@ namespace Distributed.Thing
                         proxyCapability.Host,
                         netPeer,
                         createMessage.Id,
-                        localThing: new LocalThing())));
+                        localThing: new LocalThing(createMessage.Values))));
 
             proxyCapability.SubscribeReusable((Delete deleteMessage, NetPeer netPeer) =>
                 proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest));

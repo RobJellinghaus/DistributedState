@@ -2,6 +2,7 @@
 using Distributed.Thing;
 using LiteNetLib;
 using NUnit.Framework;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Distributed.State.Test
@@ -128,6 +129,25 @@ namespace Distributed.State.Test
             distributedThing.Delete();
 
             Assert.AreEqual(0, host.Owners.Count);
+        }
+
+        [Test]
+        public void HostCreateThenModifyObject()
+        {
+            var testWorkQueue = new TestWorkQueue();
+
+            // the first host under test
+            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
+
+            // create a Distributed.Thing
+            var distributedThing = new DistributedThing(host, new LocalThing());
+
+            distributedThing.Enqueue(new[] { 1, 2, 3 });
+            distributedThing.Enqueue(new[] { 4, 5, 6 });
+
+            List<int> expected = new[] { 1, 2, 3, 4, 5, 6 }.ToList();
+            List<int> actual = distributedThing.LocalValues.ToList();
+            Assert.IsTrue(Enumerable.SequenceEqual(expected, actual));
         }
     }
 }
