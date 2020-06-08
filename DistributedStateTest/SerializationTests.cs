@@ -42,7 +42,7 @@ namespace Distributed.State.Test
         {
             // Test whether the serialization framework supports property inheritance.
             // ThingMessage.Create derives from CreateMessage which has an Id property.
-            var createThingMessage = new ThingMessages.Create(1);
+            var createThingMessage = new ThingMessages.Create(1, new int[] { });
 
             var writer = new NetDataWriter();
             NetPacketProcessor processor = new NetPacketProcessor();

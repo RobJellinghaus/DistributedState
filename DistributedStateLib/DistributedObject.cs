@@ -1,6 +1,8 @@
 ﻿// Copyright (c) 2020 by Rob Jellinghaus.
 
 using LiteNetLib;
+using System;
+using System.Linq.Expressions;
 
 namespace Distributed.State
 {
@@ -49,7 +51,7 @@ namespace Distributed.State
         /// Owner objects relay commands to proxies, along with updating local state;
         /// proxy objects relay command requests to owners, and update local state only on commands from owners.
         /// </remarks>
-        public readonly bool IsOwner;
+        public bool IsOwner => OwningPeer == null;
 
         /// <summary>
         /// The id of this object; unique within its owning DistributedPeer.
@@ -71,7 +73,6 @@ namespace Distributed.State
 
             Host = host;
             Id = host.NextOwnerId();
-            IsOwner = true;
             LocalObject = localObject;
             // and connect the local object to us
             LocalObject.Initialize(this);
@@ -93,7 +94,6 @@ namespace Distributed.State
             Host = host;
             OwningPeer = netPeer;
             Id = id;
-            IsOwner = false;
             LocalObject = localObject;
             LocalObject.Initialize(this);
         }
@@ -183,5 +183,30 @@ namespace Distributed.State
 
         protected abstract override void SendCreateMessage(NetPeer netPeer);
         protected abstract override void SendDeleteMessage(NetPeer netPeer, bool isRequest);
+
+        /// <summary>
+        /// Route a message as appropriate (either sending to all proxies if owner, or sending request to owner if proxy).
+        /// </summary>
+        /// <typeparam name="TMessage">The type of message.</typeparam>
+        /// <param name="messageFunc">Create a message given the IsRequest value (true if proxy, false if owner).</param>
+        /// <param name="localAction">Update the local object if this is the owner.</param>
+        protected void RouteMessage<TMessage>(Func<bool, TMessage> messageFunc, Action localAction)
+            where TMessage : class, new()
+        {
+            if (IsOwner)
+            {
+                // This is the canonical implementation of all IDistributedInterface methods on a distributed type implementation:
+                // send a non-request message to all proxies, and then to the local object.
+                Host.SendToProxies(messageFunc(false));
+
+                // and update the local object
+                localAction();
+            }
+            else
+            {
+                // ask the owner to do the enqueue
+                Host.SendReliableMessage(messageFunc(true), OwningPeer);
+            }
+        }
     }
 }

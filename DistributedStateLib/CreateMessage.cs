@@ -18,6 +18,9 @@ namespace Distributed.State
         /// </summary>
         public int Id { get; set; }
 
+        public CreateMessage()
+        { }
+
         public CreateMessage(int id)
         {
             Id = id;

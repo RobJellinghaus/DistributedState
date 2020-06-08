@@ -506,6 +506,18 @@ namespace Distributed.State
             }
         }
 
+        /// <summary>
+        /// Send create messages for all our owned objects to this peer.
+        /// </summary>
+        public void SendToProxies<T>(T message)
+            where T : class, new()
+        {
+            foreach (NetPeer netPeer in NetPeers)
+            {
+                SendReliableMessage(message, netPeer);
+            }
+        }
+
         #endregion
 
         #region Receiving

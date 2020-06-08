@@ -2,8 +2,6 @@
 using Distributed.State;
 using LiteNetLib;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Distributed.Thing
 {
@@ -15,18 +13,22 @@ namespace Distributed.Thing
     /// message (create, delete, and all type-specific commands) needs to exist for every type of object.
     /// This class embeds all these derived message types for DistributedThings.
     /// </remarks>
-    public static class ThingMessages
+    public class ThingMessages : Messages
     {
-        public class Create : Distributed.State.CreateMessage
+        public class Create : CreateMessage
         {
-            public Create() : base(0)
+            public int[] Values { get; set; }
+
+            public Create() : base()
             { }
 
-            public Create(int id) : base(id)
-            { }
+            public Create(int id, int[] values) : base(id)
+            {
+                Values = values;
+            }
         }
 
-        public class Delete : Distributed.State.DeleteMessage
+        public class Delete : DeleteMessage
         {
             public Delete() : base(0, false)
             { }
@@ -35,23 +37,36 @@ namespace Distributed.Thing
             { }
         }
 
+        public class Enqueue : BaseMessage
+        {
+            public int[] Values { get; set; }
+
+            public Enqueue() : base(0, false)
+            { }
+
+            public Enqueue(int id, bool isRequest, int[] values) : base(id, isRequest)
+            {
+                Values = values;
+            }
+        }
+
         public static void Register(DistributedHost.ProxyCapability proxyCapability)
         {
             proxyCapability.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
-            {
-                var newProxy = new DistributedThing(
-                    proxyCapability.Host,
+                proxyCapability.AddProxy(
                     netPeer,
-                    createMessage.Id,
-                    localThing: new LocalThing());
-
-                proxyCapability.AddProxy(netPeer, newProxy);
-            });
+                    new DistributedThing(
+                        proxyCapability.Host,
+                        netPeer,
+                        createMessage.Id,
+                        localThing: new LocalThing())));
 
             proxyCapability.SubscribeReusable((Delete deleteMessage, NetPeer netPeer) =>
-            {
-                proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest);
-            });
+                proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest));
+
+            proxyCapability.SubscribeReusable((Enqueue enqueueMessage, NetPeer netPeer) =>
+                HandleMessage<Enqueue, DistributedThing, LocalThing, IThing>(
+                    proxyCapability.Host, netPeer, enqueueMessage, (message, thing) => thing.Enqueue(message.Values)));
         }
     }
 }
