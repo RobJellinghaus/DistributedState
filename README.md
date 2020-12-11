@@ -1,6 +1,8 @@
 # DistributedState
 Lightweight distributed object library built on [LiteNetLib](https://github.com/RevenantX/LiteNetLib).
 
+![.NET Core](https://github.com/RobJellinghaus/DistributedState/workflows/.NET%20Core/badge.svg)
+
 This is a .NET Standard application with unit testing, intended as an experimental testbed for
 a distributed LAN system I'm working on that wants both reliable and unreliable peer-to-peer
 networking, locally only.
