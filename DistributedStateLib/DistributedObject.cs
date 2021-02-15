@@ -61,12 +61,12 @@ namespace Distributed.State
         /// <summary>
         /// The local object which implements the local behavior of the distributed object.
         /// </summary>
-        public readonly LocalObject LocalObject;
+        public readonly ILocalObject LocalObject;
 
         /// <summary>
         /// Create an owner DistributedObject.
         /// </summary>
-        protected DistributedObject(DistributedHost host, LocalObject localObject)
+        protected DistributedObject(DistributedHost host, ILocalObject localObject)
         {
             Contract.Requires(host != null);
             Contract.Requires(localObject != null);
@@ -81,7 +81,7 @@ namespace Distributed.State
         /// <summary>
         /// Create a proxy DistributedObject.
         /// </summary>
-        protected DistributedObject(DistributedHost host, NetPeer netPeer, int id, LocalObject localObject)
+        protected DistributedObject(DistributedHost host, NetPeer netPeer, int id, ILocalObject localObject)
         {
             Contract.Requires(host != null);
             Contract.Requires(netPeer != null);
@@ -159,7 +159,7 @@ namespace Distributed.State
     /// More strongly typed base class, for convenience of derived classes.
     /// </summary>
     public abstract class DistributedObject<TLocalObject> : DistributedObject
-        where TLocalObject : LocalObject
+        where TLocalObject : ILocalObject
     {
         /// <summary>
         /// The local object wrapped by this distributed object (be it owner or proxy).

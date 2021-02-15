@@ -26,7 +26,7 @@ namespace Distributed.State
             TMessage message,
             Action<TMessage, TInterface> invokeAction)
             where TMessage : BaseMessage
-            where TLocalObject : LocalObject, TInterface
+            where TLocalObject : ILocalObject, TInterface
             where TObject : DistributedObject<TLocalObject>, TInterface
             where TInterface : IDistributedInterface
         {

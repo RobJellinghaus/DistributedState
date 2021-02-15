@@ -8,7 +8,7 @@ namespace Distributed.Thing
     /// <summary>
     /// A trivial local object implementation that just keeps a bounded queue of integers.
     /// </summary>
-    public class LocalThing : LocalObject, IThing
+    public class LocalThing : ILocalObject, IThing
     {
         /// <summary>
         /// Maximum number of values tracked.
@@ -16,6 +16,8 @@ namespace Distributed.Thing
         public static readonly int Capacity = 10;
 
         private Queue<int> state = new Queue<int>();
+
+        private DistributedThing distributedThing;
 
         public LocalThing(int[] values = null)
         {
@@ -39,9 +41,22 @@ namespace Distributed.Thing
 
         public IEnumerable<int> LocalValues => state;
 
-        public override void Delete()
+        public DistributedObject DistributedObject => distributedThing;
+
+        public int Id => DistributedObject?.Id ?? 0;
+
+        public void Delete()
         {
             // do nothing... accept the void
+        }
+
+        public void Initialize(DistributedObject distributedObject)
+        {
+            Contract.Requires(distributedObject != null);
+            Contract.Requires(this.distributedThing == null);
+            Contract.Requires(distributedObject is DistributedThing);
+
+            this.distributedThing = (DistributedThing)distributedObject;
         }
     }
 }
