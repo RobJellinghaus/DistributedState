@@ -29,8 +29,8 @@ messages to all other hosts. So the hosts wind up with proxies for all owned obj
 
 Both owner objects and proxies wrap "local" objects which actually instantiate the interesting
 behavior. Messages (e.g. gameplay events, user commands, etc.) sent to owner objects get relayed
-reliably to proxies; messages sent to proxies get relayed to the owner, which decides what to do
-(the command may be stale so the owner may ignore it, etc.).
+reliably to proxies; messages sent to proxies get relayed (reliably) to the owner, which decides
+what to do (the command may be stale so the owner may ignore it, etc.).
 
 So the owner object is authoritative over the state of its proxies, and the proxies are all kept in
 lockstep with its state.
@@ -44,7 +44,7 @@ So when defining a new kind of distributed object, there is a fair amount of boi
 all the type-specific messages; to implement a distributed Thing, you need a Thing.Create message,
 a Thing.Delete message, etc.  This would be an interesting case for C# 9 code generation, but that
 isn't very Unity-compatible yet, so for now all the boilerplate is handwritten; see the
-DistributedThing library.
+DistributedThing project in this solution.
 
 ## Project
 
@@ -52,7 +52,8 @@ The project is divided into three libraries:
 
 - DistributedStateLib (the generic distributed peer and object code)
 - DistributedThing (an example of instantiating a particular kind of distributed object)
-- DistributedStateTest (testing assembly that covers both the generic code and the specific Thing code)
+- DistributedStateTest (testing assembly that covers both the generic code and the specific Thing code;
+  90%+ block-level code coverage as of December 2020)
 
 ## Motivation
 

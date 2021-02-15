@@ -552,7 +552,7 @@ namespace Distributed.State
         }
 
         /// <summary>
-        /// An announcement has been received (via unconnected messaeg); react accordingly.
+        /// An announcement has been received (via unconnected message); react accordingly.
         /// </summary>
         private void OnAnnounceResponseReceived(AnnounceResponseMessage message, IPEndPoint endpoint)
         {

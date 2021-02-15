@@ -120,7 +120,7 @@ namespace Distributed.State
             Host.Delete(this, SendDeleteMessage);
             
             // once we are deleted we lose our connection to our peer
-            Host = null;
+            Detach();
         }
 
 
