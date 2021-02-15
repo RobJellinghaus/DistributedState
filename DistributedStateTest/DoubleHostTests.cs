@@ -33,7 +33,6 @@ namespace Distributed.State.Test
             Assert.AreEqual(1, host2.PeerAnnounceResponseCount);
         }
 
-
         private static DistributedHost CreateHost(TestWorkQueue testWorkQueue, bool isListener)
         {
             var host = new DistributedHost(
