@@ -9,8 +9,6 @@ namespace Distributed.State
     /// </summary>
     /// <remarks>
     /// Might as well bite the bullet and handle the full port/IPV4/IPV6 enchilada.
-    /// 
-    /// Wanted to try making this a struct, but serializing it did not function well.
     /// </remarks>
     public struct SerializedSocketAddress
     {

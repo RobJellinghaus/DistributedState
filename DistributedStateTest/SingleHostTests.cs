@@ -66,7 +66,7 @@ namespace Distributed.State.Test
             {
                 AnnounceMessage announceMessage = possibleMessage as AnnounceMessage;
                 Assert.IsNotNull(announceMessage);
-                Assert.AreEqual(host.SocketAddress, announceMessage.AnnouncerSocketAddress.SocketAddress);
+                Assert.AreEqual(host.SocketAddress, announceMessage.AnnouncerSocketAddress);
                 Assert.AreEqual(0, announceMessage.KnownPeers.Length);
             }
         }

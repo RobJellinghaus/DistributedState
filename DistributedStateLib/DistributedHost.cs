@@ -153,9 +153,9 @@ namespace Distributed.State
         public readonly ushort ListenPort;
 
         /// <summary>
-        /// The address of this Peer.
+        /// The serialized socket address of this Peer.
         /// </summary>
-        public readonly SocketAddress SocketAddress;
+        public readonly SerializedSocketAddress SocketAddress;
 
         /// <summary>
         /// The LiteNetLib instance for handling broadcast traffic; has no peers.
@@ -270,7 +270,7 @@ namespace Distributed.State
             IPAddress ipv4Address = host
                 .AddressList
                 .FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
-            SocketAddress = new IPEndPoint(ipv4Address, listenPort).Serialize();
+            SocketAddress = new SerializedSocketAddress(new IPEndPoint(ipv4Address, listenPort).Serialize());
 
             netManager = new NetManager(new Listener(this))
             {
@@ -448,7 +448,7 @@ namespace Distributed.State
         {
             AnnounceMessage message = new AnnounceMessage
             {
-                AnnouncerSocketAddress = new SerializedSocketAddress(SocketAddress),
+                AnnouncerSocketAddress = SocketAddress,
                 AnnouncerIsHostingAudio = false,
                 KnownPeers = netManager
                     .ConnectedPeerList
@@ -540,7 +540,7 @@ namespace Distributed.State
                 }
 
                 // did this peer know us already? (typical scenario given re-announcements)
-                if (message.KnownPeers.Select(ssa => ssa.SocketAddress).Contains(SocketAddress))
+                if (message.KnownPeers.Contains(SocketAddress))
                 {
                     return;
                 }
