@@ -1,4 +1,5 @@
-﻿using LiteNetLib.Utils;
+﻿using LiteNetLib;
+using LiteNetLib.Utils;
 using System.Net;
 using System.Net.Sockets;
 
@@ -17,6 +18,24 @@ namespace Distributed.State
         public SerializedSocketAddress(SocketAddress socketAddress)
         {
             SocketAddress = socketAddress;
+        }
+
+        /// <summary>
+        /// Construct a SerializedSocketAddress for this peer's address.
+        /// </summary>
+        public SerializedSocketAddress(NetPeer netPeer)
+        {
+            SocketAddress = netPeer.EndPoint.Serialize();
+        }
+
+        public static bool operator ==(SerializedSocketAddress left, SerializedSocketAddress right)
+        {
+            return left.SocketAddress == right.SocketAddress;
+        }
+
+        public static bool operator !=(SerializedSocketAddress left, SerializedSocketAddress right)
+        {
+            return left.SocketAddress != right.SocketAddress;
         }
 
         public static void RegisterWith(NetPacketProcessor packetProcessor)
@@ -46,6 +65,26 @@ namespace Distributed.State
             {
                 writer.Put(socketAddress.SocketAddress[i]);
             }
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (!(obj is SerializedSocketAddress))
+            {
+                return false;
+            }
+
+            return (SerializedSocketAddress)obj == this;
+        }
+
+        public override int GetHashCode()
+        {
+            return SocketAddress.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return SocketAddress.ToString();
         }
     }
 }

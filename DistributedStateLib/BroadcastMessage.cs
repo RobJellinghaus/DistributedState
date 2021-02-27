@@ -8,9 +8,9 @@ namespace Distributed.State
     public abstract class BroadcastMessage : BaseMessage
     {
         /// <summary>
-        /// Socket address of the owner of the object doing the broadcasting.
+        /// Socket address of the owner of the object that is doing the broadcasting.
         /// </summary>
-        public SerializedSocketAddress AnnouncerSocketAddress { get; set; }
+        public SerializedSocketAddress ObjectOwnerSocketAddress { get; set; }
 
 
         public BroadcastMessage()

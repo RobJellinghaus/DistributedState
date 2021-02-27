@@ -67,7 +67,7 @@ namespace Distributed.State
 
             public void OnPeerConnected(NetPeer netPeer)
             {
-                Peer.proxies.Add(netPeer, new Dictionary<int, DistributedObject>());
+                Peer.proxies.Add(new SerializedSocketAddress(netPeer), new Dictionary<int, DistributedObject>());
 
                 Peer.SendProxiesToPeer(netPeer);
             }
@@ -78,7 +78,8 @@ namespace Distributed.State
             /// </summary>
             public void OnPeerDisconnected(NetPeer netPeer, DisconnectInfo disconnectInfo)
             {
-                if (Peer.proxies.TryGetValue(netPeer, out Dictionary<int, DistributedObject> peerObjects))
+                SerializedSocketAddress peerAddress = new SerializedSocketAddress(netPeer);
+                if (Peer.proxies.TryGetValue(peerAddress, out Dictionary<int, DistributedObject> peerObjects))
                 {
                     // delete them all
                     foreach (DistributedObject proxy in peerObjects.Values)
@@ -89,7 +90,7 @@ namespace Distributed.State
                     }
 
                     // and drop the whole collection of proxies
-                    Peer.proxies.Remove(netPeer);
+                    Peer.proxies.Remove(peerAddress);
                 }
             }
         }
@@ -110,7 +111,7 @@ namespace Distributed.State
             }
             public void AddProxy(NetPeer netPeer, DistributedObject newProxy)
             {
-                Host.AddProxy(netPeer, newProxy);
+                Host.AddProxy(new SerializedSocketAddress(netPeer), newProxy);
             }
             public void SubscribeReusable<TMessage, TUserData>(Action<TMessage, TUserData> action)
                 where TMessage : class, new()
@@ -198,8 +199,8 @@ namespace Distributed.State
         /// Note that each ID is unique only within that peer's collection; each peer defines its
         /// own proxies' ID space.
         /// </remarks>
-        private readonly Dictionary<NetPeer, Dictionary<int, DistributedObject>> proxies
-            = new Dictionary<NetPeer, Dictionary<int, DistributedObject>>();
+        private readonly Dictionary<SerializedSocketAddress, Dictionary<int, DistributedObject>> proxies
+            = new Dictionary<SerializedSocketAddress, Dictionary<int, DistributedObject>>();
 
         /// <summary>
         /// How many peer announcements has this peer received?
@@ -240,12 +241,12 @@ namespace Distributed.State
         /// <summary>
         /// Get the proxies that are owned by this peer.
         /// </summary>
-        public IReadOnlyDictionary<int, DistributedObject> ProxiesForPeer(NetPeer peer)
+        public IReadOnlyDictionary<int, DistributedObject> ProxiesForPeer(SerializedSocketAddress serializedSocketAddress)
         {
-            Contract.Requires(netManager.ConnectedPeerList.Contains(peer));
-            Contract.Requires(proxies.ContainsKey(peer));
+            Contract.Requires(netManager.ConnectedPeerList.Any(peer => serializedSocketAddress == new SerializedSocketAddress(peer)));
+            Contract.Requires(proxies.ContainsKey(serializedSocketAddress));
 
-            return proxies[peer];
+            return proxies[serializedSocketAddress];
         }
 
         #endregion
@@ -375,11 +376,11 @@ namespace Distributed.State
         /// <summary>
         /// This is a new proxy being created on this peer, owned by netPeer.
         /// </summary>
-        private void AddProxy(NetPeer netPeer, DistributedObject proxy)
+        private void AddProxy(SerializedSocketAddress peerAddress, DistributedObject proxy)
         {
             Contract.Requires(!proxy.IsOwner);
 
-            proxies[netPeer].Add(proxy.Id, proxy);
+            proxies[peerAddress].Add(proxy.Id, proxy);
         }
 
         /// <summary>
@@ -398,6 +399,7 @@ namespace Distributed.State
 
         private void OnDelete(NetPeer netPeer, int id, bool isRequest)
         {
+            SerializedSocketAddress peerAddress = new SerializedSocketAddress(netPeer);
             if (isRequest)
             {
                 // owner id may or may not still exist; it's OK if it doesn't.
@@ -425,10 +427,10 @@ namespace Distributed.State
             {
                 // this is an authoritative delete message from the owner.
                 // we expect strong consistency here so the id should still exist.
-                Contract.Requires(proxies[netPeer].ContainsKey(id));
+                Contract.Requires(proxies[peerAddress].ContainsKey(id));
 
-                DistributedObject proxy = proxies[netPeer][id];
-                proxies[netPeer].Remove(id);
+                DistributedObject proxy = proxies[peerAddress][id];
+                proxies[peerAddress].Remove(id);
                 proxy.Host = null;
             }
         }

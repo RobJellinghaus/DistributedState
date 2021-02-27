@@ -44,7 +44,7 @@ namespace Distributed.State
                 // this object really ought to exist, but in case it doesn't (maybe disconnection race?),
                 // ignore object targets that don't resolve.
                 DistributedObject target;
-                if (host.ProxiesForPeer(netPeer).TryGetValue(message.Id, out target))
+                if (host.ProxiesForPeer(new SerializedSocketAddress(netPeer)).TryGetValue(message.Id, out target))
                 {
                     // Call straight through to the local object; don't invoke Enqueue on the proxy.
                     // (If we do, it will call back to the owner, and whammo, infinite loop!)

@@ -46,7 +46,7 @@ namespace Distributed.State.Test
 
         private static IReadOnlyDictionary<int, DistributedObject> ProxiesForFirstPeer(DistributedHost host)
         {
-            return host.ProxiesForPeer(host.NetPeers.First());
+            return host.ProxiesForPeer(new SerializedSocketAddress(host.NetPeers.First()));
         }
 
         private static LocalThing FirstProxyLocalThing(DistributedHost host)
@@ -120,7 +120,7 @@ namespace Distributed.State.Test
                 host2.NetPeers.Count() == 1
                 && ProxiesForFirstPeer(host2).Count == 1
                 && host.NetPeers.Count() == 1
-                && host.ProxiesForPeer(host.NetPeers.First()).Count == 1);
+                && host.ProxiesForPeer(new SerializedSocketAddress(host.NetPeers.First())).Count == 1);
 
             DistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
             Assert.AreEqual(1, host2Proxy.Id);
