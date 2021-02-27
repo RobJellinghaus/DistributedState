@@ -11,19 +11,12 @@ namespace Distributed.State
     /// Note that derived classes get their own subscriptions; those subscriptions create
     /// proxy objects when CreateMessages are received.
     /// </remarks>
-    public abstract class CreateMessage
+    public abstract class CreateMessage : BaseMessage
     {
-        /// <summary>
-        /// Id of this object (in the originating peer's ID space).
-        /// </summary>
-        public int Id { get; set; }
-
         public CreateMessage()
         { }
 
-        public CreateMessage(int id)
-        {
-            Id = id;
-        }
+        public CreateMessage(int id) : base(id)
+        { }
     }
 }

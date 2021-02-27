@@ -20,12 +20,12 @@ namespace Distributed.State
         /// <param name="message">The message.</param>
         /// <param name="invokeAction">An action which will invoke the message on either the owner DistributedObject, or on
         /// the proxy's local object.</param>
-        public static void HandleMessage<TMessage, TObject, TLocalObject, TInterface>(
+        public static void HandleReliableMessage<TMessage, TObject, TLocalObject, TInterface>(
             DistributedHost host,
             NetPeer netPeer,
             TMessage message,
             Action<TMessage, TInterface> invokeAction)
-            where TMessage : BaseMessage
+            where TMessage : ReliableMessage
             where TLocalObject : ILocalObject, TInterface
             where TObject : DistributedObject<TLocalObject>, TInterface
             where TInterface : IDistributedInterface

@@ -10,9 +10,13 @@ namespace Distributed.Thing
     /// Distributed implementation of an IThing.
     /// </summary>
     /// <remarks>
-    /// A DistributedObject implementation handles method calls by either routing them to the owner (if this
-    /// is a proxy), or by sending updates to all proxies and then updating the local object (if this is the
-    /// owner).  The owner's messages directly update the local objects of all proxies.
+    /// A DistributedObject implementation can handle a method call either reliably or unreliably.
+    /// 
+    /// Reliable method calls are routed to the owner (if this is a proxy), or sent to all proxies
+    /// (if this is the owner). Local objects are updated only by the owner or by a proxy message
+    /// from the owner.
+    /// 
+    /// Unreliable method calls result in a broadcast to all other instances of this object.
     /// </remarks>
     public class DistributedThing : DistributedObject<LocalThing>, IThing
     {
@@ -33,7 +37,7 @@ namespace Distributed.Thing
         /// </summary>
         public void Enqueue(int[] values)
         {
-            RouteMessage(
+            RouteReliableMessage(
                 isRequest => new ThingMessages.Enqueue(Id, isRequest, values),
                 () => TypedLocalObject.Enqueue(values));
         }

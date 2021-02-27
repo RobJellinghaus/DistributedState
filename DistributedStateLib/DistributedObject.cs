@@ -185,26 +185,26 @@ namespace Distributed.State
         protected abstract override void SendDeleteMessage(NetPeer netPeer, bool isRequest);
 
         /// <summary>
-        /// Route a message as appropriate (either sending to all proxies if owner, or sending request to owner if proxy).
+        /// Route a reliable message as appropriate (either forwarding to all proxies if owner, or sending request to owner if proxy).
         /// </summary>
         /// <typeparam name="TMessage">The type of message.</typeparam>
         /// <param name="messageFunc">Create a message given the IsRequest value (true if proxy, false if owner).</param>
         /// <param name="localAction">Update the local object if this is the owner.</param>
-        protected void RouteMessage<TMessage>(Func<bool, TMessage> messageFunc, Action localAction)
+        protected void RouteReliableMessage<TMessage>(Func<bool, TMessage> messageFunc, Action localAction)
             where TMessage : class, new()
         {
             if (IsOwner)
             {
                 // This is the canonical implementation of all IDistributedInterface methods on a distributed type implementation:
-                // send a non-request message to all proxies, and then to the local object.
+                // send a reliable non-request message to all proxies...
                 Host.SendToProxies(messageFunc(false));
 
-                // and update the local object
+                // ...and update the local object.
                 localAction();
             }
             else
             {
-                // ask the owner to do the enqueue
+                // send reliable request to owner
                 Host.SendReliableMessage(messageFunc(true), OwningPeer);
             }
         }

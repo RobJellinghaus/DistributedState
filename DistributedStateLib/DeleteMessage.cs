@@ -5,7 +5,7 @@ namespace Distributed.State
     /// <summary>
     /// Message sent to delete existing proxy objects (or request deletion of an owner object).
     /// </summary>
-    public abstract class DeleteMessage : BaseMessage
+    public abstract class DeleteMessage : ReliableMessage
     {
         public DeleteMessage()
         { }

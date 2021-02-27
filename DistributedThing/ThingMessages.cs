@@ -37,7 +37,7 @@ namespace Distributed.Thing
             { }
         }
 
-        public class Enqueue : BaseMessage
+        public class Enqueue : ReliableMessage
         {
             public int[] Values { get; set; }
 
@@ -65,7 +65,7 @@ namespace Distributed.Thing
                 proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest));
 
             proxyCapability.SubscribeReusable((Enqueue enqueueMessage, NetPeer netPeer) =>
-                HandleMessage<Enqueue, DistributedThing, LocalThing, IThing>(
+                HandleReliableMessage<Enqueue, DistributedThing, LocalThing, IThing>(
                     proxyCapability.Host, netPeer, enqueueMessage, (message, thing) => thing.Enqueue(message.Values)));
         }
     }
