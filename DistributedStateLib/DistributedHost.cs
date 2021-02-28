@@ -243,7 +243,13 @@ namespace Distributed.State
         /// </summary>
         public IReadOnlyDictionary<int, DistributedObject> ProxiesForPeer(SerializedSocketAddress serializedSocketAddress)
         {
-            Contract.Requires(netManager.ConnectedPeerList.Any(peer => serializedSocketAddress == new SerializedSocketAddress(peer)));
+            Contract.Requires(netManager.ConnectedPeerList.Any(peer =>
+            {
+                SerializedSocketAddress peerAddress = new SerializedSocketAddress(peer);
+                bool addressesAreEqual = peerAddress.Equals(serializedSocketAddress);
+                return addressesAreEqual;
+            }));
+
             Contract.Requires(proxies.ContainsKey(serializedSocketAddress));
 
             return proxies[serializedSocketAddress];

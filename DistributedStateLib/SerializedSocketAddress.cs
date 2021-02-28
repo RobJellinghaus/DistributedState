@@ -30,12 +30,12 @@ namespace Distributed.State
 
         public static bool operator ==(SerializedSocketAddress left, SerializedSocketAddress right)
         {
-            return left.SocketAddress == right.SocketAddress;
+            return left.SocketAddress.Equals(right.SocketAddress);
         }
 
         public static bool operator !=(SerializedSocketAddress left, SerializedSocketAddress right)
         {
-            return left.SocketAddress != right.SocketAddress;
+            return !(left.SocketAddress == right.SocketAddress);
         }
 
         public static void RegisterWith(NetPacketProcessor packetProcessor)
