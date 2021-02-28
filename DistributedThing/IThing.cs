@@ -16,15 +16,26 @@ namespace Distributed.Thing
         /// As with all non-Local IDistributedInterface messages, calling this on a proxy will
         /// result in a request to the owner object.
         /// </remarks>
+        [ReliableMethod]
         void Enqueue(int[] values);
 
         /// <summary>
-        /// Get the local values held by this Thing, in order from first bleated to last.
+        /// Get the local values held by this Thing, in order from first enqueued to last.
         /// </summary>
-        /// <remarks>
-        /// Distributed methods that begin with Local are implemented solely on the local object,
-        /// and do not perform remote communication at all.
-        /// </remarks>
+        [LocalMethod]
         IEnumerable<int> LocalValues { get; }
+
+        /// <summary>
+        /// Ping all other instances of this object with this message.
+        /// </summary>
+        /// <param name="message"></param>
+        [BroadcastMethod]
+        void Ping(char[] message);
+
+        /// <summary>
+        /// Get the last message that was pinged.
+        /// </summary>
+        [LocalMethod]
+        char[] LastMessage { get; }
     }
 }

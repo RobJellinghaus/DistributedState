@@ -8,6 +8,9 @@ namespace Distributed.State
     /// <remarks>
     /// Both owner and proxy objects contain an instance of the appropriate type of local object; this ensures the same
     /// behavior regardless of owner/proxy topology.
+    /// 
+    /// ILocalObject implements IDistributedInterface because it is possible to invoke methods from a distributed interface
+    /// on a local object.
     /// </remarks>
     public interface ILocalObject : IDistributedInterface
     {

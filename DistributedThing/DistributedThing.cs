@@ -37,10 +37,15 @@ namespace Distributed.Thing
         /// </summary>
         public void Enqueue(int[] values)
         {
-            RouteReliableMessage(
-                isRequest => new ThingMessages.Enqueue(Id, isRequest, values),
-                () => TypedLocalObject.Enqueue(values));
+            RouteReliableMessage(isRequest => new ThingMessages.Enqueue(Id, isRequest, values));
         }
+
+        public void Ping(char[] message)
+        {
+            RouteBroadcastMessage(new ThingMessages.Ping(Id, new SerializedSocketAddress(OwningPeer), message));
+        }
+
+        public char[] LastMessage => TypedLocalObject?.LastMessage ?? null;
 
         protected override void SendCreateMessage(NetPeer netPeer)
         {

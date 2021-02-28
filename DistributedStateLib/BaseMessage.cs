@@ -19,5 +19,10 @@ namespace Distributed.State
         {
             Id = id;
         }
+
+        /// <summary>
+        /// Invoke the message on the given target, which may be a distributed object or a local object.
+        /// </summary>
+        public abstract void Invoke(IDistributedInterface target);
     }
 }

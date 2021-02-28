@@ -190,23 +190,35 @@ namespace Distributed.State
         /// <typeparam name="TMessage">The type of message.</typeparam>
         /// <param name="messageFunc">Create a message given the IsRequest value (true if proxy, false if owner).</param>
         /// <param name="localAction">Update the local object if this is the owner.</param>
-        protected void RouteReliableMessage<TMessage>(Func<bool, TMessage> messageFunc, Action localAction)
-            where TMessage : class, new()
+        protected void RouteReliableMessage<TMessage>(Func<bool, TMessage> messageFunc)
+            where TMessage : ReliableMessage, new()
         {
             if (IsOwner)
             {
                 // This is the canonical implementation of all IDistributedInterface methods on a distributed type implementation:
                 // send a reliable non-request message to all proxies...
-                Host.SendToProxies(messageFunc(false));
+                TMessage message = messageFunc(false);
+                Host.SendToProxies(message);
 
                 // ...and update the local object.
-                localAction();
+                message.Invoke(LocalObject);
             }
             else
             {
                 // send reliable request to owner
                 Host.SendReliableMessage(messageFunc(true), OwningPeer);
             }
+        }
+
+        /// <summary>
+        /// Route a broadcast message.
+        /// </summary>
+        /// <typeparam name="TMessage">The type of message.</typeparam>
+        /// <param name="messageFunc">Create a message given the IsRequest value (true if proxy, false if owner).</param>
+        protected void RouteBroadcastMessage<TMessage>(TMessage message)
+            where TMessage : BroadcastMessage, new()
+        {
+            Host.SendBroadcastMessage(message);
         }
     }
 }

@@ -35,6 +35,11 @@ namespace Distributed.Thing
 
             public Delete(int id, bool isRequest) : base(id, isRequest)
             { }
+
+            public override void Invoke(IDistributedInterface target)
+            {
+                target.Delete();
+            }
         }
 
         public class Enqueue : ReliableMessage
@@ -47,6 +52,29 @@ namespace Distributed.Thing
             public Enqueue(int id, bool isRequest, int[] values) : base(id, isRequest)
             {
                 Values = values;
+            }
+
+            public override void Invoke(IDistributedInterface target)
+            {
+                ((IThing)target).Enqueue(Values);
+            }
+        }
+
+        public class Ping : BroadcastMessage
+        {
+            public char[] Message { get; set; }
+
+            public Ping()
+            { }
+
+            public Ping(int id, SerializedSocketAddress ownerAddress, char[] message) : base(id, ownerAddress)
+            {
+                Message = message;
+            }
+
+            public override void Invoke(IDistributedInterface target)
+            {
+                ((IThing)target).Ping(Message);
             }
         }
 
@@ -66,7 +94,11 @@ namespace Distributed.Thing
 
             proxyCapability.SubscribeReusable((Enqueue enqueueMessage, NetPeer netPeer) =>
                 HandleReliableMessage<Enqueue, DistributedThing, LocalThing, IThing>(
-                    proxyCapability.Host, netPeer, enqueueMessage, (message, thing) => thing.Enqueue(message.Values)));
+                    proxyCapability.Host, netPeer, enqueueMessage));
+
+            proxyCapability.SubscribeReusable((Ping pingMessage, NetPeer netPeer) =>
+                HandleBroadcastMessage<Ping, DistributedThing, LocalThing, IThing>(
+                    proxyCapability.Host, pingMessage));
         }
     }
 }

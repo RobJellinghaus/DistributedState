@@ -17,6 +17,8 @@ namespace Distributed.Thing
 
         private Queue<int> state = new Queue<int>();
 
+        private char[] lastMessage = null;
+
         private DistributedThing distributedThing;
 
         public LocalThing(int[] values = null)
@@ -39,7 +41,14 @@ namespace Distributed.Thing
             }
         }
 
+        public void Ping(char[] message)
+        {
+            lastMessage = message;
+        }
+
         public IEnumerable<int> LocalValues => state;
+
+        public char[] LastMessage => lastMessage;
 
         public DistributedObject DistributedObject => distributedThing;
 

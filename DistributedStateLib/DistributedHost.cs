@@ -416,7 +416,7 @@ namespace Distributed.State
                     // and tell all proxies
                     foreach (NetPeer proxyPeer in NetPeers)
                     {
-                        distributedObject.SendDeleteMessageInternal(netPeer, false);
+                        distributedObject.SendDeleteMessageInternal(proxyPeer, false);
                     }
 
                     owners.Remove(id);
@@ -467,7 +467,7 @@ namespace Distributed.State
         /// <summary>
         /// Send this message as a broadcast.
         /// </summary>
-        private void SendBroadcastMessage<T>(T message)
+        public void SendBroadcastMessage<T>(T message)
             where T : class, new()
         {
             netDataWriter.Reset();

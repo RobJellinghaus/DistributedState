@@ -18,5 +18,10 @@ namespace Distributed.State
 
         public CreateMessage(int id) : base(id)
         { }
+
+        public override void Invoke(IDistributedInterface target)
+        {
+            // Create message is a special case; it doesn't invoke anything on the local object beyond constructing it.
+        }
     }
 }
