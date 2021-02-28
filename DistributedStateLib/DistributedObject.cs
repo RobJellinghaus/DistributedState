@@ -219,6 +219,8 @@ namespace Distributed.State
             where TMessage : BroadcastMessage, new()
         {
             Host.SendBroadcastMessage(message);
+            // and update the local object because we don't expect to hear our own broadcast... TBD tho
+            message.Invoke(LocalObject);
         }
     }
 }
