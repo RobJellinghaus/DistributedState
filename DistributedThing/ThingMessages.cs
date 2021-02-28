@@ -2,6 +2,7 @@
 using Distributed.State;
 using LiteNetLib;
 using System;
+using System.Net;
 
 namespace Distributed.Thing
 {
@@ -93,12 +94,10 @@ namespace Distributed.Thing
                 proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest));
 
             proxyCapability.SubscribeReusable((Enqueue enqueueMessage, NetPeer netPeer) =>
-                HandleReliableMessage<Enqueue, DistributedThing, LocalThing, IThing>(
-                    proxyCapability.Host, netPeer, enqueueMessage));
+                HandleReliableMessage<Enqueue, DistributedThing, LocalThing, IThing>(proxyCapability.Host, netPeer, enqueueMessage));
 
-            proxyCapability.SubscribeReusable((Ping pingMessage, NetPeer netPeer) =>
-                HandleBroadcastMessage<Ping, DistributedThing, LocalThing, IThing>(
-                    proxyCapability.Host, pingMessage));
+            proxyCapability.SubscribeReusable((Ping pingMessage, IPEndPoint endpoint) =>
+                HandleBroadcastMessage<Ping, DistributedThing, LocalThing, IThing>(proxyCapability.Host, pingMessage));
         }
     }
 }

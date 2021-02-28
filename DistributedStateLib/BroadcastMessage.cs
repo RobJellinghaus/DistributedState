@@ -10,15 +10,15 @@ namespace Distributed.State
         /// <summary>
         /// Socket address of the owner of the object that is doing the broadcasting.
         /// </summary>
-        public SerializedSocketAddress ObjectOwnerSocketAddress { get; set; }
+        public SerializedSocketAddress OwnerAddress { get; set; }
 
 
         public BroadcastMessage()
         { }
 
-        public BroadcastMessage(int id, SerializedSocketAddress sourceAddress)
+        public BroadcastMessage(int id, SerializedSocketAddress ownerAddress) : base(id)
         {
-            Id = id;
+            OwnerAddress = ownerAddress;
         }
     }
 }
