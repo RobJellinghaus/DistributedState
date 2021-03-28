@@ -13,18 +13,22 @@ the tests pass!
 
 ## Architecture
 
-The basic idea is each app in the peer-to-peer system will instantiate a DistributedHost (class
-I implemented in this library), which represents that app's endpoint in the peer-to-peer system.
-DistributedHosts announce their existence periodically via UDP broadcast to a known port, including
-a list of other peers they know about already.
+Each app in the peer-to-peer system creates an instance of DistributedHost (a class
+in this library), which represents that app's endpoint in the peer-to-peer system.
 
-They also listen on that port, and when any host hears from a new host that doesn't know them yet,
-it responds. The new host then sets up a LiteNetLib peer-to-peer connection to the respondent. So
-it's an all-way N-to-N peer network. (Which won't scale much, but doesn't have to, as my app is
-currently local-wifi only with a max of maybe 5 or 6 nodes.)
+### Discovery
+
+DistributedHosts announce their existence periodically via UDP broadcast to a known port, including
+a list of other peers they know about already.  They also listen on that port, and when any host
+hears from a new host that doesn't know them yet, it responds. The new host then sets up a
+LiteNetLib peer-to-peer connection to the respondent. So it's an all-way N-to-N peer network.
+(Which won't scale much, but doesn't have to, as my app is currently local-wifi only with a max
+of maybe 5 or 6 nodes.)
+
+### Owners and proxies
 
 Each host can create owner objects. Owner objects, when created, send create-proxy
-messages to all other hosts. So the hosts wind up with proxies for all owned objects on other hosts.
+messages to all other hosts. So the hosts wind up with proxies for all objects owned by other hosts.
 (Newly connected hosts also get proxies for all existing objects owned by other hosts, naturally.)
 
 Both owner objects and proxies wrap "local" objects which actually instantiate the interesting
@@ -42,9 +46,10 @@ which is completely statically typed; there is no way to send a polymorphic obje
 serialized packet. The only polymorphism is that you can subscribe to incoming packets by type.
 So when defining a new kind of distributed object, there is a fair amount of boilerplate to define
 all the type-specific messages; to implement a distributed Thing, you need a Thing.Create message,
-a Thing.Delete message, etc.  This would be an interesting case for C# 9 code generation, but that
-isn't very Unity-compatible yet, so for now all the boilerplate is handwritten; see the
-DistributedThing project in this solution.
+a Thing.Delete message, etc. 
+
+This would be an interesting case for C# 9.0 code generation, but that isn't very Unity-compatible
+yet, so for now all the boilerplate is handwritten; see the DistributedThing project in this solution.
 
 ## Project
 
