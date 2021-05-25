@@ -12,7 +12,7 @@ namespace Distributed.State.Test
         [Test]
         public void ConstructHost()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort);
 
             Assert.IsNotNull(host);
@@ -30,7 +30,7 @@ namespace Distributed.State.Test
         [Test]
         public void TestListenForAnnounce()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             var testBroadcastListener = new TestBroadcastNetEventListener();
             var testNetManager = new TestNetManager(new NetManager(testBroadcastListener));
@@ -75,7 +75,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostListenForAnnounce()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the host under test
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
@@ -102,7 +102,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateObject()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
@@ -118,7 +118,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateThenDeleteObject()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
@@ -134,7 +134,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateThenModifyObject()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);

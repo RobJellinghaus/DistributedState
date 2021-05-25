@@ -7,14 +7,17 @@ namespace Distributed.State.Test
     /// <summary>
     /// Work queue that runs work when polled.
     /// </summary>
-    class TestWorkQueue : IWorkQueue
+    /// <remarks>
+    /// This is a basic implementation; the IWorkQueue interface exists to allow others as well.
+    /// </remarks>
+    class WorkQueue : IWorkQueue
     {
         /// <summary>
         /// The list of actions to run.
         /// </summary>
         private readonly List<Action> actions;
 
-        public TestWorkQueue()
+        public WorkQueue()
         {
             actions = new List<Action>();
         }
@@ -45,6 +48,7 @@ namespace Distributed.State.Test
         public void PollEvents()
         {
             // allocate copy so that if any actions queue more work, it gets queued after all current work
+            // TODO: pool these copies
             Action[] actionsCopy = actions.ToArray();
             actions.Clear();
             foreach (Action action in actionsCopy)

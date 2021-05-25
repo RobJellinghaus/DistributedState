@@ -12,7 +12,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostConnectToHost()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
@@ -33,7 +33,7 @@ namespace Distributed.State.Test
             Assert.AreEqual(1, host2.PeerAnnounceResponseCount);
         }
 
-        private static DistributedHost CreateHost(TestWorkQueue testWorkQueue, bool isListener)
+        private static DistributedHost CreateHost(WorkQueue testWorkQueue, bool isListener)
         {
             var host = new DistributedHost(
                 testWorkQueue,
@@ -57,7 +57,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateAfterConnection()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -95,7 +95,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateBeforeConnection()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -134,7 +134,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateThenDisconnect()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -177,7 +177,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateAfterConnectionThenDelete()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -208,7 +208,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateAndDeleteAfterConnection()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -243,7 +243,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateAndDeleteProxyAfterConnection()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -274,7 +274,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateWithState()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -313,7 +313,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateThenUpdate()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -347,7 +347,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateThenProxyUpdate()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
@@ -393,7 +393,7 @@ namespace Distributed.State.Test
         [Test]
         public void HostCreateThenProxyBroadcast()
         {
-            var testWorkQueue = new TestWorkQueue();
+            var testWorkQueue = new WorkQueue();
 
             // the first host under test
             using DistributedHost host = CreateHost(testWorkQueue, true);
