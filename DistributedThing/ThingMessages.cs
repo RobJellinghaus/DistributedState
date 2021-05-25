@@ -39,7 +39,7 @@ namespace Distributed.Thing
 
             public override void Invoke(IDistributedInterface target)
             {
-                target.Delete();
+                target.OnDelete();
             }
         }
 

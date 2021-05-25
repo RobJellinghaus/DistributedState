@@ -50,16 +50,16 @@ namespace Distributed.Thing
 
         public char[] LastMessage => lastMessage;
 
-        public DistributedObject DistributedObject => distributedThing;
+        public IDistributedObject DistributedObject => distributedThing;
 
         public int Id => DistributedObject?.Id ?? 0;
 
-        public void Delete()
+        public void OnDelete()
         {
             // do nothing... accept the void
         }
 
-        public void Initialize(DistributedObject distributedObject)
+        public void Initialize(IDistributedObject distributedObject)
         {
             Contract.Requires(distributedObject != null);
             Contract.Requires(this.distributedThing == null);

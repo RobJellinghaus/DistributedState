@@ -44,7 +44,7 @@ namespace Distributed.State.Test
             return host;
         }
 
-        private static IReadOnlyDictionary<int, DistributedObject> ProxiesForFirstPeer(DistributedHost host)
+        private static IReadOnlyDictionary<int, IDistributedObject> ProxiesForFirstPeer(DistributedHost host)
         {
             return host.ProxiesForPeer(new SerializedSocketAddress(host.NetPeers.First()));
         }
@@ -77,7 +77,7 @@ namespace Distributed.State.Test
             // wait until the proxy for the new object makes it to the other host
             WaitUtils.WaitUntil(new[] { host, host2 }, () => ProxiesForFirstPeer(host2).Count == 1);
 
-            DistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
+            IDistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
             Assert.AreEqual(1, host2Proxy.Id);
             Assert.False(host2Proxy.IsOwner);
 
@@ -87,7 +87,7 @@ namespace Distributed.State.Test
             // wait until the proxy for the new object makes it to the first host
             WaitUtils.WaitUntil(new[] { host, host2 }, () => ProxiesForFirstPeer(host).Count == 1);
 
-            DistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
+            IDistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
             Assert.AreEqual(1, hostProxy.Id);
             Assert.False(hostProxy.IsOwner);
         }
@@ -122,11 +122,11 @@ namespace Distributed.State.Test
                 && host.NetPeers.Count() == 1
                 && host.ProxiesForPeer(new SerializedSocketAddress(host.NetPeers.First())).Count == 1);
 
-            DistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
+            IDistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
             Assert.AreEqual(1, host2Proxy.Id);
             Assert.False(host2Proxy.IsOwner);
 
-            DistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
+            IDistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
             Assert.AreEqual(2, hostProxy.Id);
             Assert.False(hostProxy.IsOwner);
         }
@@ -161,11 +161,11 @@ namespace Distributed.State.Test
                     && host.NetPeers.Count() == 1
                     && ProxiesForFirstPeer(host).Count == 1);
 
-                DistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
+                IDistributedObject host2Proxy = ProxiesForFirstPeer(host2).Values.First();
                 Assert.AreEqual(1, host2Proxy.Id);
                 Assert.False(host2Proxy.IsOwner);
 
-                DistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
+                IDistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
                 Assert.AreEqual(2, hostProxy.Id);
                 Assert.False(hostProxy.IsOwner);
             }
@@ -304,7 +304,7 @@ namespace Distributed.State.Test
             // wait until the proxy for the new object makes it to the first host
             WaitUtils.WaitUntil(new[] { host, host2 }, () => ProxiesForFirstPeer(host).Count == 1);
 
-            DistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
+            IDistributedObject hostProxy = ProxiesForFirstPeer(host).Values.First();
             LocalThing hostLocalThing = (LocalThing)hostProxy.LocalObject;
 
             Assert.IsTrue(Enumerable.SequenceEqual(new[] { 3, 4 }, hostLocalThing.LocalValues.ToList()));
