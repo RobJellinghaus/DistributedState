@@ -257,7 +257,7 @@ namespace Distributed.State
 
         #endregion
 
-        #region Construction and disposal
+        #region Construction, type registration, and disposal
 
         public DistributedHost(
             IWorkQueue workQueue,
@@ -292,7 +292,7 @@ namespace Distributed.State
 
             netPacketProcessor = new NetPacketProcessor();
             SerializedSocketAddress.RegisterWith(netPacketProcessor);
-            netPacketProcessor.RegisterNestedType<DistributedId>();
+            RegisterType<DistributedId>();
             netPacketProcessor.SubscribeReusable<AnnounceMessage, IPEndPoint>(OnAnnounceReceived);
             netPacketProcessor.SubscribeReusable<AnnounceResponseMessage, IPEndPoint>(OnAnnounceResponseReceived);
 
@@ -322,6 +322,12 @@ namespace Distributed.State
             netManager.Stop(true);
         }
 
+        public void RegisterType<T>()
+            where T : struct, INetSerializable
+        {
+            netPacketProcessor.RegisterNestedType<T>();
+        }
+        
         #endregion
 
         #region Managing DistributedObjects
