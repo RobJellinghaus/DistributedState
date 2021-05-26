@@ -23,7 +23,7 @@ namespace Distributed.Thing
             public Create() : base()
             { }
 
-            public Create(int id, int[] values) : base(id)
+            public Create(DistributedId id, int[] values) : base(id)
             {
                 Values = values;
             }
@@ -34,7 +34,7 @@ namespace Distributed.Thing
             public Delete() : base(0, false)
             { }
 
-            public Delete(int id, bool isRequest) : base(id, isRequest)
+            public Delete(DistributedId id, bool isRequest) : base(id, isRequest)
             { }
 
             public override void Invoke(IDistributedInterface target)
@@ -50,7 +50,7 @@ namespace Distributed.Thing
             public Enqueue() : base(0, false)
             { }
 
-            public Enqueue(int id, bool isRequest, int[] values) : base(id, isRequest)
+            public Enqueue(DistributedId id, bool isRequest, int[] values) : base(id, isRequest)
             {
                 Values = values;
             }
@@ -68,7 +68,7 @@ namespace Distributed.Thing
             public Ping()
             { }
 
-            public Ping(int id, SerializedSocketAddress ownerAddress, char[] message) : base(id, ownerAddress)
+            public Ping(DistributedId id, SerializedSocketAddress ownerAddress, char[] message) : base(id, ownerAddress)
             {
                 Message = message;
             }

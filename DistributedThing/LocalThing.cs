@@ -52,7 +52,7 @@ namespace Distributed.Thing
 
         public IDistributedObject DistributedObject => distributedThing;
 
-        public int Id => DistributedObject?.Id ?? 0;
+        public DistributedId Id => DistributedObject?.Id ?? 0;
 
         public void OnDelete()
         {

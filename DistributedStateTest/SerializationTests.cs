@@ -46,6 +46,7 @@ namespace Distributed.State.Test
 
             var writer = new NetDataWriter();
             NetPacketProcessor processor = new NetPacketProcessor();
+            processor.RegisterNestedType<DistributedId>();
 
             processor.Write(writer, createThingMessage);
 
@@ -58,7 +59,7 @@ namespace Distributed.State.Test
             processor.ReadAllPackets(reader);
 
             Assert.IsNotNull(readMessage);
-            Assert.AreEqual(1, readMessage.Id);
+            Assert.AreEqual(new DistributedId(1), readMessage.Id);
         }
     }
 }

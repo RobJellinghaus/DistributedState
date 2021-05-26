@@ -25,7 +25,7 @@ namespace Distributed.Thing
         {
         }
 
-        public DistributedThing(DistributedHost peer, NetPeer owningPeer, int id, LocalThing localThing)
+        public DistributedThing(DistributedHost peer, NetPeer owningPeer, DistributedId id, LocalThing localThing)
             : base(peer, owningPeer, id, localThing)
         {
         }
