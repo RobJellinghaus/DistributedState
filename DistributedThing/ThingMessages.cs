@@ -31,7 +31,7 @@ namespace Distributed.Thing
 
         public class Delete : DeleteMessage
         {
-            public Delete() : base(0, false)
+            public Delete() : base()
             { }
 
             public Delete(DistributedId id, bool isRequest) : base(id, isRequest)
@@ -47,7 +47,7 @@ namespace Distributed.Thing
         {
             public int[] Values { get; set; }
 
-            public Enqueue() : base(0, false)
+            public Enqueue() : base()
             { }
 
             public Enqueue(DistributedId id, bool isRequest, int[] values) : base(id, isRequest)
