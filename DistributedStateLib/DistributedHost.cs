@@ -79,12 +79,10 @@ namespace Distributed.State
                 SerializedSocketAddress peerAddress = new SerializedSocketAddress(netPeer);
                 if (Host.proxies.TryGetValue(peerAddress, out Dictionary<DistributedId, IDistributedObject> peerObjects))
                 {
-                    // delete them all
+                    // detach them all
                     foreach (IDistributedObject proxy in peerObjects.Values)
                     {
-                        // Delete the local object only; calling Delete() on the proxy itself would result
-                        // in a delete request to the owning peer, which just became inaccessible!
-                        proxy.LocalObject.OnDelete();
+                        proxy.OnDetach();
                     }
 
                     // and drop the whole collection of proxies
@@ -141,7 +139,7 @@ namespace Distributed.State
         /// <summary>
         /// Delay between announce messages.
         /// </summary>
-        public static int AnnounceDelayMsec = 1000;
+        public static int AnnounceDelayMsec = 2000;
 
         /// <summary>
         /// The broadcast port for announcing new peers and disseminating information.
@@ -482,6 +480,8 @@ namespace Distributed.State
         /// </remarks>
         public void Announce(bool isHostingAudio = false)
         {
+            logger?.WriteNet(NetLogLevel.Trace, $"DistributedHost.Announce()");
+
             AnnounceMessage message = new AnnounceMessage
             {
                 AnnouncerSocketAddress = SocketAddress,
