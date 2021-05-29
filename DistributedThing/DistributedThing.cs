@@ -20,11 +20,17 @@ namespace Distributed.Thing
     /// </remarks>
     public class DistributedThing : DistributedObject<LocalThing>, IThing
     {
+        /// <summary>
+        /// Construct an owning Thing.
+        /// </summary>
         public DistributedThing(DistributedHost peer, LocalThing localThing)
             : base(peer, localThing)
         {
         }
 
+        /// <summary>
+        /// Construct a proxy Thing.
+        /// </summary>
         public DistributedThing(DistributedHost peer, NetPeer owningPeer, DistributedId id, LocalThing localThing)
             : base(peer, owningPeer, id, localThing)
         {

@@ -74,8 +74,6 @@ namespace Distributed.State
             Host = host;
             Id = host.NextOwnerId();
             LocalObject = localObject;
-            // and connect the local object to us
-            LocalObject.Initialize(this);
         }
 
         /// <summary>
@@ -91,7 +89,6 @@ namespace Distributed.State
             OwningPeer = netPeer;
             Id = id;
             LocalObject = localObject;
-            LocalObject.Initialize(this);
         }
 
         /// <summary>
@@ -168,8 +165,8 @@ namespace Distributed.State
         /// </summary>
         public readonly TLocalObject TypedLocalObject;
 
-        protected DistributedObject(DistributedHost peer, TLocalObject localObject)
-            : base(peer, localObject)
+        protected DistributedObject(DistributedHost host, TLocalObject localObject)
+            : base(host, localObject)
         {
             TypedLocalObject = localObject;
 

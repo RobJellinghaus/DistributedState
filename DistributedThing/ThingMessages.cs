@@ -82,13 +82,17 @@ namespace Distributed.Thing
         public static void Register(DistributedHost.ProxyCapability proxyCapability)
         {
             proxyCapability.SubscribeReusable((Create createMessage, NetPeer netPeer) =>
-                proxyCapability.AddProxy(
+            {
+                // wire the local and distributed things together
+                var localThing = new LocalThing(createMessage.Values);
+                var distributedThing = new DistributedThing(
+                    proxyCapability.Host,
                     netPeer,
-                    new DistributedThing(
-                        proxyCapability.Host,
-                        netPeer,
-                        createMessage.Id,
-                        localThing: new LocalThing(createMessage.Values))));
+                    createMessage.Id,
+                    localThing);
+                localThing.Initialize(distributedThing);
+                proxyCapability.AddProxy(netPeer, distributedThing);
+            });
 
             proxyCapability.SubscribeReusable((Delete deleteMessage, NetPeer netPeer) =>
                 proxyCapability.OnDelete(netPeer, deleteMessage.Id, deleteMessage.IsRequest));
