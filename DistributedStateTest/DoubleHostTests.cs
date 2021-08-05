@@ -260,7 +260,7 @@ namespace Distributed.State.Test
             // wait until the proxy for the new object makes it to the other host
             WaitUtils.WaitUntil(
                 new[] { host, host2 },
-                () => host2.NetPeers.Count() == 1 && ProxiesForFirstPeer(host2).Count == 1);
+                () => host2.NetPeers.Count() == 1 && ProxiesForFirstPeer(host2)?.Count == 1);
 
             // now delete the proxy
             ProxiesForFirstPeer(host2)[1].Delete();

@@ -23,7 +23,7 @@ namespace Distributed.State.Test
 
             var writer = new NetDataWriter();
             NetPacketProcessor processor = new NetPacketProcessor();
-            SerializedSocketAddress.RegisterWith(processor);
+            processor.RegisterNestedType(SerializedSocketAddress.Serialize, SerializedSocketAddress.Deserialize);
 
             processor.Write(writer, packet);
 

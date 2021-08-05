@@ -28,57 +28,14 @@ namespace Distributed.State.Test
         }
 
         [Test]
-        public void TestListenForAnnounce()
-        {
-            var testWorkQueue = new WorkQueue();
-
-            var testBroadcastListener = new TestBroadcastNetEventListener();
-            var testNetManager = new TestNetManager(new NetManager(testBroadcastListener));
-            testNetManager.NetManager.BroadcastReceiveEnabled = true;
-            testNetManager.NetManager.Start(DistributedHost.DefaultListenPort);
-
-            // the host under test
-            using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: false);
-
-            // start announcing
-            host.Announce();
-
-            // the list of all pollable objects, to ensure forward progress
-            IPollEvents[] pollables = new IPollEvents[] { host, testNetManager };
-
-            // should have received Announce message
-            WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
-            Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out object announceMessage));
-            ValidateAnnounceMessage(announceMessage, host);
-
-            // now execute pending work
-            testWorkQueue.PollEvents();
-
-            // should still be one queued item -- the *next* announce message
-            Assert.AreEqual(1, testWorkQueue.Count);
-
-            // wait to receive second Announce
-            WaitUtils.WaitUntil(pollables, () => testBroadcastListener.ReceivedMessages.Count == 1);
-            Assert.IsTrue(testBroadcastListener.ReceivedMessages.TryDequeue(out announceMessage));
-            ValidateAnnounceMessage(announceMessage, host);
-
-            static void ValidateAnnounceMessage(object possibleMessage, DistributedHost host)
-            {
-                AnnounceMessage announceMessage = possibleMessage as AnnounceMessage;
-                Assert.IsNotNull(announceMessage);
-                Assert.AreEqual(host.SocketAddress, announceMessage.AnnouncerSocketAddress);
-                Assert.AreEqual(0, announceMessage.KnownPeers.Length);
-            }
-        }
-
-
-        [Test]
         public void HostListenForAnnounce()
         {
             var testWorkQueue = new WorkQueue();
 
             // the host under test
             using DistributedHost host = new DistributedHost(testWorkQueue, DistributedHost.DefaultListenPort, isListener: true);
+            // reduce announce delay to expedite test
+            host.AnnounceDelayMsec = 0;
 
             // start announcing
             host.Announce();
@@ -87,7 +44,7 @@ namespace Distributed.State.Test
             IPollEvents[] pollables = new IPollEvents[] { host };
 
             // should have received Announce message
-            WaitUtils.WaitUntil(pollables, () => host.PeerAnnounceCount == 1);
+            WaitUtils.WaitUntil(pollables, () => host.SelfAnnounceCount == 1);
 
             // now execute pending work
             testWorkQueue.PollEvents();
@@ -96,7 +53,7 @@ namespace Distributed.State.Test
             Assert.AreEqual(1, testWorkQueue.Count);
 
             // wait to receive second Announce
-            WaitUtils.WaitUntil(pollables, () => host.PeerAnnounceCount == 2);
+            WaitUtils.WaitUntil(pollables, () => host.SelfAnnounceCount == 2);
         }
 
         [Test]
